@@ -1,0 +1,59 @@
+{
+  "intents": [
+    {
+      "tag": "linked_list",
+      "patterns": ["What is a linked list?"],
+      "responses": ["A linked list is a linear data structure where each element is a separate object and each element (node) points to the next one in the sequence."]
+    },
+    {
+      "tag": "advantages_linked_list",
+      "patterns": ["What are the advantages of a linked list over an array?"],
+      "responses": ["Linked lists have dynamic size, efficient insertion and deletion operations, and no need for contiguous memory allocation like arrays."]
+    },
+    {
+      "tag": "types_trees",
+      "patterns": ["What are the different types of trees in data structures?"],
+      "responses": ["Some common types of trees include binary trees, binary search trees, AVL trees, red-black trees, and B-trees."]
+    },
+    {
+      "tag": "stack",
+      "patterns": ["What is a stack and how does it work?"],
+      "responses": ["A stack is a linear data structure that follows the Last In, First Out (LIFO) principle. It has two main operations: push (to add an element to the top) and pop (to remove the top element)."]
+    },
+    {
+      "tag": "queue_using_stacks",
+      "patterns": ["How do you implement a queue using stacks?"],
+      "responses": ["One way to implement a queue using stacks is to use two stacks. One stack is used for enqueue operations, and the other is used for dequeue operations."]
+    },
+    {
+      "tag": "recursion",
+      "patterns": ["What is recursion in algorithms?"],
+      "responses": ["Recursion is a technique where a function calls itself to solve smaller instances of the same problem. It's commonly used in algorithms like factorial calculation, Fibonacci sequence generation, and tree traversal."]
+    },
+    {
+      "tag": "time_complexity_binary_search",
+      "patterns": ["What is the time complexity of binary search?"],
+      "responses": ["The time complexity of binary search is O(log n) because it halves the search space in each step."]
+    },
+    {
+      "tag": "dynamic_programming",
+      "patterns": ["What are the characteristics of dynamic programming?"],
+      "responses": ["Dynamic programming is characterized by solving problems by breaking them down into simpler subproblems and solving each subproblem only once. It often involves overlapping subproblems and optimal substructure."]
+    },
+    {
+      "tag": "hashing",
+      "patterns": ["What is the purpose of hashing in data structures?"],
+      "responses": ["Hashing is used to map data of arbitrary size to fixed-size values. It's commonly used for data retrieval and storage in hash tables, where keys are mapped to array indices using a hash function."]
+    },
+    {
+      "tag": "sorting_algorithms",
+      "patterns": ["What are some common sorting algorithms?"],
+      "responses": ["Some common sorting algorithms include bubble sort, selection sort, insertion sort, merge sort, quick sort, and heap sort."]
+    },
+    {
+      "tag": "chemistry",
+      "patterns": ["Explain the concept of stoichiometry in chemistry?"],
+      "responses": ["Stoichiometry is the calculation of quantities of substances involved in chemical reactions based on the balanced equation. It involves determining the molar ratios of reactants and products, and calculating the amounts of substances consumed or produced."]
+    }
+  ]
+}

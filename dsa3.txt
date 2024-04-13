@@ -1,0 +1,3330 @@
+About the Authors
+ Granville Barnett
+ Granville is currently a Ph.D candidate at Queensland University of Technology
+ (QUT)working on parallelism at the Microsoft QUT eResearch Centre1. He also
+ holds a degree in Computer Science, and is a Microsoft MVP. His main interests
+ are in programming languages and compilers. Granville can be contacted via
+ one of two places: either his personal website (http://gbarnett.org) or his
+ blog (http://msmvps.com/blogs/gbarnett).
+ Luca Del Tongo
+ Luca is currently studying for his masters degree in Computer Science at Flo
+rence. His main interests vary from web development to research elds such as
+ data mining and computer vision. Luca also maintains an Italian blog which
+ can be found at http://blogs.ugidotnet.org/wetblog/.
+ 1http://www.mquter.qut.edu.au/
+ VII
+ www.dbooks.org
+Page intentionally left blank.
+Chapter 1
+ Introduction
+ 1.1 What this book is, and what it isnt
+ This book provides implementations of common and uncommon algorithms in
+ pseudocode which is language independent and provides for easy porting to most
+ imperative programming languages. It is not a de nitive book on the theory of
+ data structures and algorithms.
+ For the most part this book presents implementations devised by the authors
+ themselves based on the concepts by which the respective algorithms are based
+ upon so it is more than possible that our implementations di er from those
+ considered the norm.
+ You should use this book alongside another on the same subject, but one
+ that contains formal proofs of the algorithms in question. In this book we use
+ the abstract big Oh notation to depict the run time complexity of algorithms
+ so that the book appeals to a larger audience.
+ 1.2 Assumed knowledge
+ We have written this book with few assumptions of the reader, but some have
+ been necessary in order to keep the book as concise and approachable as possible.
+ We assume that the reader is familiar with the following:
+ 1. Big Oh notation
+ 2. An imperative programming language
+ 3. Object oriented concepts
+ 1.2.1 Big Oh notation
+ For run time complexity analysis we use big Oh notation extensively so it is vital
+ that you are familiar with the general concepts to determine which is the best
+ algorithm for you in certain scenarios. We have chosen to use big Oh notation
+ for a few reasons, the most important of which is that it provides an abstract
+ measurement by which we can judge the performance of algorithms without
+ using mathematical proofs.
+ 1
+ www.dbooks.org
+CHAPTER 1. INTRODUCTION
+ 2
+ Figure 1.1: Algorithmic run time expansion
+ Figure 1.1 shows some of the run times to demonstrate how important it is to
+ choose an e cient algorithm. For the sanity of our graph we have omitted cubic
+ O(n3), and exponential O(2n) run times. Cubic and exponential algorithms
+ should only ever be used for very small problems (if ever!); avoid them if feasibly
+ possible.
+ The following list explains some of the most common big Oh notations:
+ O(1) constant: the operation doesnt depend on the size of its input, e.g. adding
+ a node to the tail of a linked list where we always maintain a pointer to
+ the tail node.
+ O(n) linear: the run time complexity is proportionate to the size of n.
+ O(log n) logarithmic: normally associated with algorithms that break the problem
+ into smaller chunks per each invocation, e.g. searching a binary search
+ tree.
+ O(n log n) just n log n: usually associated with an algorithm that breaks the problem
+ into smaller chunks per each invocation, and then takes the results of these
+ smaller chunks and stitches them back together, e.g. quick sort.
+ O(n2) quadratic: e.g. bubble sort.
+ O(n3) cubic: very rare.
+ O(2n) exponential: incredibly rare.
+ If you encounter either of the latter two items (cubic and exponential) this is
+ really a signal for you to review the design of your algorithm. While prototyp
+ing algorithm designs you may just have the intention of solving the problem
+ irrespective of how fast it works. We would strongly advise that you always
+ review your algorithm design and optimise where possible particularly loops
+CHAPTER 1. INTRODUCTION
+ 3
+ and recursive calls so that you can get the most e cient run times for your
+ algorithms.
+ The biggest asset that big Oh notation gives us is that it allows us to es
+sentially discard things like hardware. If you have two sorting algorithms, one
+ with a quadratic run time, and the other with a logarithmic run time then the
+ logarithmic algorithm will always be faster than the quadratic one when the
+ data set becomes suitably large. This applies even if the former is ran on a ma
+chine that is far faster than the latter. Why? Because big Oh notation isolates
+ a key factor in algorithm analysis: growth. An algorithm with a quadratic run
+ time grows faster than one with a logarithmic run time. It is generally said at
+ some point as n 
+the logarithmic algorithm will become faster than the
+ quadratic algorithm.
+ Big Oh notation also acts as a communication tool. Picture the scene: you
+ are having a meeting with some fellow developers within your product group.
+ You are discussing prototype algorithms for node discovery in massive networks.
+ Several minutes elapse after you and two others have discussed your respective
+ algorithms and how they work. Does this give you a good idea of how fast each
+ respective algorithm is? No. The result of such a discussion will tell you more
+ about the high level algorithm design rather than its e ciency. Replay the scene
+ back in your head, but this time as well as talking about algorithm design each
+ respective developer states the asymptotic run time of their algorithm. Using
+ the latter approach you not only get a good general idea about the algorithm
+ design, but also key e ciency data which allows you to make better choices
+ when it comes to selecting an algorithm t for purpose.
+ Some readers may actually work in a product group where they are given
+ budgets per feature. Each feature holds with it a budget that represents its up
+permost time bound. If you save some time in one feature it doesnt necessarily
+ give you a bu er for the remaining features. Imagine you are working on an
+ application, and you are in the team that is developing the routines that will
+ essentially spin up everything that is required when the application is started.
+ Everything is great until your boss comes in and tells you that the start up
+ time should not exceed n ms. The e ciency of every algorithm that is invoked
+ during start up in this example is absolutely key to a successful product. Even
+ if you dont have these budgets you should still strive for optimal solutions.
+ Taking a quantitative approach for many software development properties
+ will make you a far superior programmer- measuring ones work is critical to
+ success.
+ 1.2.2 Imperative programming language
+ All examples are given in a pseudo-imperative coding format and so the reader
+ must know the basics of some imperative mainstream programming language
+ to port the examples e ectively, we have written this book with the following
+ target languages in mind:
+ 1. C++
+ 2. C#
+ 3. Java
+ www.dbooks.org
+CHAPTER 1. INTRODUCTION
+ 4
+ The reason that we are explicit in this requirement is simple all our imple
+mentations are based on an imperative thinking style. If you are a functional
+ programmer you will need to apply various aspects from the functional paradigm
+ to produce e cient solutions with respect to your functional language whether
+ it be Haskell, F#, OCaml, etc.
+ Two of the languages that we have listed (C# and Java) target virtual
+ machines which provide various things like security sand boxing, and memory
+ management via garbage collection algorithms. It is trivial to port our imple
+mentations to these languages. When porting to C++ you must remember to
+ use pointers for certain things. For example, when we describe a linked list
+ node as having a reference to the next node, this description is in the context
+ of a managed environment. In C++ you should interpret the reference as a
+ pointer to the next node and so on. For programmers who have a fair amount
+ of experience with their respective language these subtleties will present no is
+sue, which is why we really do emphasise that the reader must be comfortable
+ with at least one imperative language in order to successfully port the pseudo
+implementations in this book.
+ It is essential that the user is familiar with primitive imperative language
+ constructs before reading this book otherwise you will just get lost. Some algo
+rithms presented in this book can be confusing to follow even for experienced
+ programmers!
+ 1.2.3 Object oriented concepts
+ For the most part this book does not use features that are speci c to any one
+ language. In particular, we never provide data structures or algorithms that
+ work on generic types this is in order to make the samples as easy to follow
+ as possible. However, to appreciate the designs of our data structures you will
+ need to be familiar with the following object oriented (OO) concepts:
+ 1. Inheritance
+ 2. Encapsulation
+ 3. Polymorphism
+ This is especially important if you are planning on looking at the C# target
+ that we have implemented (more on that in 1.7) which makes extensive use
+ of the OO concepts listed above. As a nal note it is also desirable that the
+ reader is familiar with interfaces as the C# target uses interfaces throughout
+ the sorting algorithms.
+ 1.3 Pseudocode
+ Throughout this book we use pseudocode to describe our solutions. For the
+ most part interpreting the pseudocode is trivial as it looks very much like a
+ more abstract C++, or C#, but there are a few things to point out:
+ 1. Pre-conditions should always be enforced
+ 2. Post-conditions represent the result of applying algorithm a to data struc
+ture d
+CHAPTER 1. INTRODUCTION
+ 3. The type of parameters is inferred
+ 4. All primitive language constructs are explicitly begun and ended
+ 5
+ If an algorithm has a return type it will often be presented in the post
+condition, but where the return type is su ciently obvious it may be omitted
+ for the sake of brevity.
+ Most algorithms in this book require parameters, and because we assign no
+ explicit type to those parameters the type is inferred from the contexts in which
+ it is used, and the operations performed upon it. Additionally, the name of
+ the parameter usually acts as the biggest clue to its type. For instance n is a
+ pseudo-name for a number and so you can assume unless otherwise stated that
+ n translates to an integer that has the same number of bits as a WORD on a
+ 32 bit machine, similarly l is a pseudo-name for a list where a list is a resizeable
+ array (e.g. a vector).
+ The last major point of reference is that we always explicitly end a language
+ construct. For instance if we wish to close the scope of a for loop we will
+ explicitly state end for rather than leaving the interpretation of when scopes
+ are closed to the reader. While implicit scope closure works well in simple code,
+ in complex cases it can lead to ambiguity.
+ The pseudocode style that we use within this book is rather straightforward.
+ All algorithms start with a simple algorithm signature, e.g.
+ 1) algorithm AlgorithmName(arg1, arg2, ..., argN)
+ 2) ...
+ n) end AlgorithmName
+ Immediately after the algorithm signature we list any Pre or Post condi
+tions.
+ 1) algorithm AlgorithmName(n)
+ 2)
+ Pre: n is the value to compute the factorial of
+ 3)
+ 4)
+ 5)
+ n 0
+ Post: the factorial of n has been computed
+ // ...
+ n) end AlgorithmName
+ The example above describes an algorithm by the name of AlgorithmName,
+ which takes a single numeric parameter n. The pre and post conditions follow
+ the algorithm signature; you should always enforce the pre-conditions of an
+ algorithm when porting them to your language of choice.
+ Normally what is listed as a pre-conidition is critical to the algorithms opera
+tion. This may cover things like the actual parameter not being null, or that the
+ collection passed in must contain at least n items. The post-condition mainly
+ describes the e ect of the algorithms operation. An example of a post-condition
+ might be The list has been sorted in ascending order
+ Because everything we describe is language independent you will need to
+ make your own mind up on how to best handle pre-conditions. For example,
+ in the C# target we have implemented, we consider non-conformance to pre
+conditions to be exceptional cases. We provide a message in the exception to
+ tell the caller why the algorithm has failed to execute normally.
+ www.dbooks.org
+CHAPTER 1. INTRODUCTION
+ 1.4 Tips for working through the examples
+ 6
+ As with most books you get out what you put in and so we recommend that in
+ order to get the most out of this book you work through each algorithm with a
+ pen and paper to track things like variable names, recursive calls etc.
+ The best way to work through algorithms is to set up a table, and in that
+ table give each variable its own column and continuously update these columns.
+ This will help you keep track of and visualise the mutations that are occurring
+ throughout the algorithm. Often while working through algorithms in such
+ a way you can intuitively map relationships between data structures rather
+ than trying to work out a few values on paper and the rest in your head. We
+ suggest you put everything on paper irrespective of how trivial some variables
+ and calculations may be so that you always have a point of reference.
+ When dealing with recursive algorithm traces we recommend you do the
+ same as the above, but also have a table that records function calls and who
+ they return to. This approach is a far cleaner way than drawing out an elaborate
+ map of function calls with arrows to one another, which gets large quickly and
+ simply makes things more complex to follow. Track everything in a simple and
+ systematic way to make your time studying the implementations far easier.
+ 1.5 Book outline
+ We have split this book into two parts:
+ Part 1: Provides discussion and pseudo-implementations of common and uncom
+mon data structures; and
+ Part 2: Provides algorithms of varying purposes from sorting to string operations.
+ The reader doesnt have to read the book sequentially from beginning to
+ end: chapters can be read independently from one another. We suggest that
+ in part 1 you read each chapter in its entirety, but in part 2 you can get away
+ with just reading the section of a chapter that describes the algorithm you are
+ interested in.
+ Each of the chapters on data structures present initially the algorithms con
+cerned with:
+ 1. Insertion
+ 2. Deletion
+ 3. Searching
+ The previous list represents what we believe in the vast majority of cases to
+ be the most important for each respective data structure.
+ For all readers we recommend that before looking at any algorithm you
+ quickly look at Appendix E which contains a table listing the various symbols
+ used within our algorithms and their meaning. One keyword that we would like
+ to point out here is yield. You can think of yield in the same light as return.
+ The return keyword causes the method to exit and returns control to the caller,
+ whereas yield returns each value to the caller. With yield control only returns
+ to the caller when all values to return to the caller have been exhausted.
+CHAPTER 1. INTRODUCTION
+ 1.6 Testing
+ 7
+ All the data structures and algorithms have been tested using a minimised test
+ driven development style on paper to esh out the pseudocode algorithm. We
+ then transcribe these tests into unit tests satisfying them one by one. When
+ all the test cases have been progressively satis ed we consider that algorithm
+ suitably tested.
+ For the most part algorithms have fairly obvious cases which need to be
+ satis ed. Some however have many areas which can prove to be more complex
+ to satisfy. With such algorithms we will point out the test cases which are tricky
+ and the corresponding portions of pseudocode within the algorithm that satisfy
+ that respective case.
+ As you become more familiar with the actual problem you will be able to
+ intuitively identify areas which may cause problems for your algorithms imple
+mentation. This in some cases will yield an overwhelming list of concerns which
+ will hinder your ability to design an algorithm greatly. When you are bom
+barded with such a vast amount of concerns look at the overall problem again
+ and sub-divide the problem into smaller problems. Solving the smaller problems
+ and then composing them is a far easier task than clouding your mind with too
+ many little details.
+ The only type of testing that we use in the implementation of all that is
+ provided in this book are unit tests. Because unit tests contribute such a core
+ piece of creating somewhat more stable software we invite the reader to view
+ Appendix D which describes testing in more depth.
+ 1.7 Where can I get the code?
+ This book doesnt provide any code speci cally aligned with it, however we do
+ actively maintain an open source project1 that houses a C# implementation of
+ all the pseudocode listed. The project is named Data Structures and Algorithms
+ (DSA) and can be found at http://codeplex.com/dsa.
+ 1.8 Final messages
+ We have just a few nal messages to the reader that we hope you digest before
+ you embark on reading this book:
+ 1. Understand how the algorithm works rst in an abstract sense; and
+ 2. Always work through the algorithms on paper to understand how they
+ achieve their outcome
+ If you always follow these key points, you will get the most out of this book.
+ 1All readers are encouraged to provide suggestions, feature requests, and bugs so we can
+ further improve our implementations.
+ www.dbooks.org
+Part I
+ Data Structures
+ 8
+Chapter 2
+ Linked Lists
+ Linked lists can be thought of from a high level perspective as being a series
+ of nodes. Each node has at least a single pointer to the next node, and in the
+ last nodes case a null pointer representing that there are no more nodes in the
+ linked list.
+ In DSA our implementations of linked lists always maintain head and tail
+ pointers so that insertion at either the head or tail of the list is a constant
+ time operation. Random insertion is excluded from this and will be a linear
+ operation. As such, linked lists in DSA have the following characteristics:
+ 1. Insertion is O(1)
+ 2. Deletion is O(n)
+ 3. Searching is O(n)
+ Out of the three operations the one that stands out is that of insertion. In
+ DSA we chose to always maintain pointers (or more aptly references) to the
+ node(s) at the head and tail of the linked list and so performing a traditional
+ insertion to either the front or back of the linked list is an O(1) operation. An
+ exception to this rule is performing an insertion before a node that is neither
+ the head nor tail in a singly linked list. When the node we are inserting before
+ is somewhere in the middle of the linked list (known as random insertion) the
+ complexity is O(n). In order to add before the designated node we need to
+ traverse the linked list to nd that nodes current predecessor. This traversal
+ yields an O(n) run time.
+ This data structure is trivial, but linked lists have a few key points which at
+ times make them very attractive:
+ 1. the list is dynamically resized, thus it incurs no copy penalty like an array
+ or vector would eventually incur; and
+ 2. insertion is O(1).
+ 2.1 Singly Linked List
+ Singly linked lists are one of the most primitive data structures you will nd in
+ this book. Each node that makes up a singly linked list consists of a value, and
+ a reference to the next node (if any) in the list.
+ 9
+ www.dbooks.org
+CHAPTER 2. LINKED LISTS
+ Figure 2.1: Singly linked list node
+ Figure 2.2: A singly linked list populated with integers
+ 2.1.1 Insertion
+ 10
+ In general when people talk about insertion with respect to linked lists of any
+ form they implicitly refer to the adding of a node to the tail of the list. When
+ you use an API like that of DSA and you see a general purpose method that
+ adds a node to the list, you can assume that you are adding the node to the tail
+ of the list not the head.
+ Adding a node to a singly linked list has only two cases:
+ 1. head = in which case the node we are adding is now both the head and
+ tail of the list; or
+ 2. we simply need to append our node onto the end of the list updating the
+ tail reference appropriately.
+ 1) algorithm Add(value)
+ 2)
+ Pre: value is the value to add to the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ Post: value has been placed at the tail of the list
+ n node(value)
+ if head = 
+head n
+ tail 
+else
+ n
+ tail.Next 
+tail 
+11) end if
+ 12) end Add
+ n
+ n
+ As an example of the previous algorithm consider adding the following se
+quence of integers to the list: 1, 45, 60, and 12, the resulting list is that of
+ Figure 2.2.
+ 2.1.2 Searching
+ Searching a linked list is straightforward: we simply traverse the list checking
+ the value we are looking for with the value of each node in the linked list. The
+ algorithm listed in this section is very similar to that used for traversal in 2.1.4.
+CHAPTER 2. LINKED LISTS
+ 1) algorithm Contains(head, value)
+ 2)
+ Pre: head is the head node in the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ value is the value to search for
+ Post: the item is either in the linked list, true; otherwise false
+ n head
+ while n= and n.Value=value
+ n n.Next
+ end while
+ if n = 
+return false
+ 11) end if
+ 12) return true
+ 13) end Contains
+ 2.1.3 Deletion
+ 11
+ Deleting a node from a linked list is straightforward but there are a few cases
+ we need to account for:
+ 1. the list is empty; or
+ 2. the node to remove is the only node in the linked list; or
+ 3. we are removing the head node; or
+ 4. we are removing the tail node; or
+ 5. the node to remove is somewhere in between the head and tail; or
+ 6. the item to remove doesnt exist in the linked list
+ The algorithm whose cases we have described will remove a node from any
+where within a list irrespective of whether the node is the head etc. If you know
+ that items will only ever be removed from the head or tail of the list then you
+ can create much more concise algorithms. In the case of always removing from
+ the front of the linked list deletion becomes an O(1) operation.
+ www.dbooks.org
+CHAPTER 2. LINKED LISTS
+ 1) algorithm Remove(head, value)
+ 2)
+ Pre: head is the head node in the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ value is the value to remove from the list
+ Post: value is removed from the list, true; otherwise false
+ if head = 
+// case 1
+ return false
+ end if
+ n head
+ 10) if n.Value = value
+ 11)
+ if head = tail
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ 17)
+ 18)
+ 19)
+ // case 2
+ head 
+tail 
+else
+ // case 3
+ head head.Next
+ end if
+ return true
+ 20) end if
+ 21) while n.Next= and n.Next.Value= value
+ 22)
+ n n.Next
+ 23) end while
+ 24) if n.Next= 
+25)
+ if n.Next = tail
+ 26)
+ 27)
+ 28)
+ 29)
+ // case 4
+ tail 
+end if
+ n
+ // this is only case 5 if the conditional on line 25 was false
+ 30)
+ 31)
+ n.Next 
+n.Next.Next
+ return true
+ 32) end if
+ 33) // case 6
+ 34) return false
+ 35) end Remove
+ 2.1.4 Traversing the list
+ 12
+ Traversing a singly linked list is the same as that of traversing a doubly linked
+ list (de ned in 2.2). You start at the head of the list and continue until you
+ come across a node that is . The two cases are as follows:
+ 1. node = , we have exhausted all nodes in the linked list; or
+ 2. we must update the node reference to be node.Next.
+ The algorithm described is a very simple one that makes use of a simple
+ while loop to check the rst case.
+CHAPTER 2. LINKED LISTS
+ 1) algorithm Traverse(head)
+ 2)
+ Pre: head is the head node in the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: the items in the list have been traversed
+ n head
+ while n=0
+ yield n.Value
+ n n.Next
+ end while
+ 9) end Traverse
+ 2.1.5 Traversing the list in reverse order
+ 13
+ Traversing a singly linked list in a forward manner (i.e. left to right) is simple
+ as demonstrated in 2.1.4. However, what if we wanted to traverse the nodes in
+ the linked list in reverse order for some reason? The algorithm to perform such
+ a traversal is very simple, and just like demonstrated in 2.1.3 we will need to
+ acquire a reference to the predecessor of a node, even though the fundamental
+ characteristics of the nodes that make up a singly linked list make this an
+ expensive operation. For each node, nding its predecessor is an O(n) operation,
+ so over the course of traversing the whole list backwards the cost becomes O(n2).
+ Figure 2.3 depicts the following algorithm being applied to a linked list with
+ the integers 5, 10, 1, and 40.
+ 1) algorithm ReverseTraversal(head, tail)
+ 2)
+ Pre: head and tail belong to the same list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ Post: the items in the list have been traversed in reverse order
+ if tail = 
+curr 
+tail
+ while curr = head
+ prev 
+head
+ while prev.Next= curr
+ prev 
+end while
+ prev.Next
+ yield curr.Value
+ curr 
+end while
+ prev
+ yield curr.Value
+ 15) end if
+ 16) end ReverseTraversal
+ This algorithm is only of real interest when we are using singly linked lists,
+ as you will soon see that doubly linked lists (de ned in 2.2) make reverse list
+ traversal simple and e cient, as shown in 2.2.3.
+ 2.2 Doubly Linked List
+ Doubly linked lists are very similar to singly linked lists. The only di erence is
+ that each node has a reference to both the next and previous nodes in the list.
+ www.dbooks.org
+CHAPTER 2. LINKED LISTS
+ 14
+ Figure 2.3: Reverse traveral of a singly linked list
+ Figure 2.4: Doubly linked list node
+CHAPTER 2. LINKED LISTS
+ 15
+ The following algorithms for the doubly linked list are exactly the same as
+ those listed previously for the singly linked list:
+ 1. Searching (de ned in 2.1.2)
+ 2. Traversal (de ned in 2.1.4)
+ 2.2.1 Insertion
+ The only major di erence between the algorithm in 2.1.1 is that we need to
+ remember to bind the previous pointer of n to the previous tail node if n was
+ not the rst node to be inserted into the list.
+ 1) algorithm Add(value)
+ 2)
+ Pre: value is the value to add to the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ Post: value has been placed at the tail of the list
+ n node(value)
+ if head = 
+head n
+ tail 
+else
+ n
+ n.Previous 
+tail.Next 
+tail 
+12) end if
+ 13) end Add
+ n
+ tail
+ n
+ Figure 2.5 shows the doubly linked list after adding the sequence of integers
+ de ned in 2.1.1.
+ Figure 2.5: Doubly linked list populated with integers
+ 2.2.2 Deletion
+ As you may of guessed the cases that we use for deletion in a doubly linked
+ list are exactly the same as those de ned in 2.1.3. Like insertion we have the
+ added task of binding an additional reference (Previous) to the correct value.
+ www.dbooks.org
+CHAPTER 2. LINKED LISTS
+ 1) algorithm Remove(head, value)
+ 2)
+ Pre: head is the head node in the list
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ value is the value to remove from the list
+ Post: value is removed from the list, true; otherwise false
+ if head = 
+return false
+ end if
+ if value = head.Value
+ if head = tail
+ head 
+tail 
+else
+ head head.Next
+ head.Previous 
+end if
+ return true
+ 17) end if
+ 18) n head.Next
+ 19) while n= and value=n.Value
+ 20)
+ n n.Next
+ 21) end while
+ 22) if n=tail
+ 23)
+ tail 
+24)
+ tail.Previous
+ tail.Next 
+25)
+ return true
+ 26) else if n=
+ 27)
+ n.Previous.Next 
+28)
+ 29)
+ n.Next.Previous 
+return true
+ 30) end if
+ 31) return false
+ 32) end Remove
+ n.Next
+ n.Previous
+ 2.2.3 Reverse Traversal
+ 16
+ Singly linked lists have a forward only design, which is why the reverse traversal
+ algorithm de ned in 2.1.5 required some creative invention. Doubly linked lists
+ make reverse traversal as simple as forward traversal (de ned in 2.1.4) except
+ that we start at the tail node and update the pointers in the opposite direction.
+ Figure 2.6 shows the reverse traversal algorithm in action.
+CHAPTER 2. LINKED LISTS
+ 17
+ Figure 2.6: Doubly linked list reverse traversal
+ 1) algorithm ReverseTraversal(tail)
+ 2)
+ Pre: tail is the tail node of the list to traverse
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: the list has been traversed in reverse order
+ n tail
+ while n= 
+yield n.Value
+ n n.Previous
+ end while
+ 9) end ReverseTraversal
+ 2.3 Summary
+ Linked lists are good to use when you have an unknown number of items to
+ store. Using a data structure like an array would require you to specify the size
+ up front; exceeding that size involves invoking a resizing algorithm which has
+ a linear run time. You should also use linked lists when you will only remove
+ nodes at either the head or tail of the list to maintain a constant run time.
+ This requires maintaining pointers to the nodes at the head and tail of the list
+ but the memory overhead will pay for itself if this is an operation you will be
+ performing many times.
+ What linked lists are not very good for is random insertion, accessing nodes
+ by index, and searching. At the expense of a little memory (in most cases 4
+ bytes would su ce), and a few more read/writes you could maintain a count
+ variable that tracks how many items are contained in the list so that accessing
+ such a primitive property is a constant operation- you just need to update
+ count during the insertion and deletion algorithms.
+ Singly linked lists should be used when you are only performing basic in
+sertions. In general doubly linked lists are more accommodating for non-trivial
+ operations on a linked list.
+ We recommend the use of a doubly linked list when you require forwards
+ and backwards traversal. For the most cases this requirement is present. For
+ example, consider a token stream that you want to parse in a recursive descent
+ fashion. Sometimes you will have to backtrack in order to create the correct
+ parse tree. In this scenario a doubly linked list is best as its design makes
+ bi-directional traversal much simpler and quicker than that of a singly linked
+ www.dbooks.org
+CHAPTER 2. LINKED LISTS
+ list.
+ 18
+Chapter 3
+ Binary Search Tree
+ Binary search trees (BSTs) are very simple to understand. We start with a root
+ node with value x, where the left subtree of x contains nodes with values < x
+ and the right subtree contains nodes whose values are x. Each node follows
+ the same rules with respect to nodes in their left and right subtrees.
+ BSTs are of interest because they have operations which are favourably fast:
+ insertion, look up, and deletion can all be done in O(log n) time. It is important
+ to note that the O(log n) times for these operations can only be attained if
+ the BST is reasonably balanced; for a tree data structure with self balancing
+ properties see AVL tree de ned in 7).
+ In the following examples you can assume, unless used as a parameter alias
+ that root is a reference to the root node of the tree.
+ 23
+ 14
+ 7
+ 17
+ 9
+ 31
+ Figure 3.1: Simple unbalanced binary search tree
+ 19
+ www.dbooks.org
+CHAPTER 3. BINARY SEARCH TREE
+ 3.1 Insertion
+ 20
+ As mentioned previously insertion is an O(log n) operation provided that the
+ tree is moderately balanced.
+ 1) algorithm Insert(value)
+ 2)
+ Pre: value has passed custom type checks for type T
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: value has been placed in the correct location in the tree
+ if root = 
+root 
+else
+ node(value)
+ InsertNode(root, value)
+ end if
+ 9) end Insert
+ 1) algorithm InsertNode(current, value)
+ 2)
+ Pre: current is the node to start from
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: value has been placed in the correct location in the tree
+ if value < current.Value
+ if current.Left = 
+current.Left 
+else
+ node(value)
+ InsertNode(current.Left, value)
+ 9)
+ end if
+ 10) else
+ 11)
+ if current.Right = 
+12)
+ 13)
+ 14)
+ current.Right 
+else
+ node(value)
+ InsertNode(current.Right, value)
+ 15)
+ end if
+ 16) end if
+ 17) end InsertNode
+ The insertion algorithm is split for a good reason. The rst algorithm (non
+recursive) checks a very core base case- whether or not the tree is empty. If
+ the tree is empty then we simply create our root node and nish. In all other
+ cases we invoke the recursive InsertNode algorithm which simply guides us to
+ the rst appropriate place in the tree to put value. Note that at each stage we
+ perform a binary chop: we either choose to recurse into the left subtree or the
+ right by comparing the new value with that of the current node. For any totally
+ ordered type, no value can simultaneously satisfy the conditions to place it in
+ both subtrees.
+CHAPTER 3. BINARY SEARCH TREE
+ 3.2 Searching
+ 21
+ Searching a BST is even simpler than insertion. The pseudocode is self-explanatory
+ but we will look brie y at the premise of the algorithm nonetheless.
+ Wehave talked previously about insertion, we go either left or right with the
+ right subtree containing values that are 
+x where x is the value of the node
+ we are inserting. When searching the rules are made a little more atomic and
+ at any one time we have four cases to consider:
+ 1. the root = in which case value is not in the BST; or
+ 2. root.Value = value in which case value is in the BST; or
+ 3. value < root.Value, we must inspect the left subtree of root for value; or
+ 4. value > root.Value, we must inspect the right subtree of root for value.
+ 1) algorithm Contains(root, value)
+ 2)
+ Pre: root is the root node of the tree, value is what we would like to locate
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ Post: value is either located or not
+ if root = 
+return false
+ end if
+ if root.Value = value
+ return true
+ else if value < root.Value
+ return Contains(root.Left, value)
+ 11) else
+ 12)
+ return Contains(root.Right, value)
+ 13) end if
+ 14) end Contains
+ www.dbooks.org
+CHAPTER 3. BINARY SEARCH TREE
+ 3.3 Deletion
+ 22
+ Removing a node from a BST is fairly straightforward, with four cases to con
+sider:
+ 1. the value to remove is a leaf node; or
+ 2. the value to remove has a right subtree, but no left subtree; or
+ 3. the value to remove has a left subtree, but no right subtree; or
+ 4. the value to remove has both a left and right subtree in which case we
+ promote the largest value in the left subtree.
+ There is also an implicit fth case whereby the node to be removed is the
+ only node in the tree. This case is already covered by the rst, but should be
+ noted as a possibility nonetheless.
+ Of course in a BST a value may occur more than once. In such a case the
+ rst occurrence of that value in the BST will be removed.
+ 23
+ #4: Right subtree
+      and left subtree
+ #3: Left subtree
+      no right subtree
+ #2: Right subtree
+      no left subtree
+ 7
+ #1: Leaf Node
+ 14
+ 9
+ 31
+ Figure 3.2: binary search tree deletion cases
+ The Remove algorithm given below relies on two further helper algorithms
+ named FindParent, and FindNode which are described in 3.4 and 3.5 re
+spectively.
+CHAPTER3. BINARYSEARCHTREE 23
+ 1)algorithmRemove(value)
+ 2) Pre: valueisthevalueofthenodetoremove,root istherootnodeoftheBST
+ 3) Countisthenumberof itemsintheBST
+ 3) Post:nodewithvalueisremovedif foundinwhichcaseyieldstrue,otherwisefalse
+ 4) nodeToRemove FindNode(value)
+ 5) ifnodeToRemove=
+ 6) returnfalse//valuenot inBST
+ 7) endif
+ 8) parent FindParent(value)
+ 9) ifCount=1
+ 10) root //weareremovingtheonlynodeintheBST
+ 11) elseifnodeToRemove.Left= andnodeToRemove.Right=null
+ 12) //case#1
+ 13) ifnodeToRemove.Value<parent.Value
+ 14) parent.Left
+ 15) else
+ 16) parent.Right
+ 17) endif
+ 18) elseifnodeToRemove.Left= andnodeToRemove.Right=
+ 19) //case#2
+ 20) ifnodeToRemove.Value<parent.Value
+ 21) parent.Left nodeToRemove.Right
+ 22) else
+ 23) parent.Right nodeToRemove.Right
+ 24) endif
+ 25) elseifnodeToRemove.Left= andnodeToRemove.Right=
+ 26) //case#3
+ 27) ifnodeToRemove.Value<parent.Value
+ 28) parent.Left nodeToRemove.Left
+ 29) else
+ 30) parent.Right nodeToRemove.Left
+ 31) endif
+ 32) else
+ 33) //case#4
+ 34) largestValue nodeToRemove.Left
+ 35) whilelargestValue.Right=
+ 36) // ndthelargestvalueintheleftsubtreeofnodeToRemove
+ 37) largestValue largestValue.Right
+ 38) endwhile
+ 39) //settheparents Rightpointerof largestValueto
+ 40) FindParent(largestValue.Value).Right
+ 41) nodeToRemove.Value largestValue.Value
+ 42) endif
+ 43) Count Count 1
+ 44) returntrue
+ 45)endRemove
+ www.dbooks.org
+CHAPTER 3. BINARY SEARCH TREE
+ 3.4 Finding the parent of a given node
+ 24
+ The purpose of this algorithm is simple- to return a reference (or pointer) to
+ the parent node of the one with the given value. We have found that such an
+ algorithm is very useful, especially when performing extensive tree transforma
+tions.
+ 1) algorithm FindParent(value, root)
+ 2)
+ Pre: value is the value of the node we want to nd the parent of
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16) else
+ 17)
+ 18)
+ 19)
+ 20)
+ 21)
+ 22)
+ 23)
+ root is the root node of the BST and is ! = 
+Post: a reference to the parent node of value if found; otherwise 
+if value = root.Value
+ return 
+end if
+ if value < root.Value
+ if root.Left = 
+return 
+else if root.Left.Value = value
+ return root
+ else
+ return FindParent(value, root.Left)
+ end if
+ if root.Right = 
+return 
+else if root.Right.Value = value
+ return root
+ else
+ return FindParent(value, root.Right)
+ end if
+ 24) end if
+ 25) end FindParent
+ A special case in the above algorithm is when the speci ed value does not
+ exist in the BST, in which case we return . Callers to this algorithm must take
+ account of this possibility unless they are already certain that a node with the
+ speci ed value exists.
+ 3.5 Attaining a reference to a node
+ This algorithm is very similar to 3.4, but instead of returning a reference to the
+ parent of the node with the speci ed value, it returns a reference to the node
+ itself. Again, is returned if the value isnt found.
+CHAPTER 3. BINARY SEARCH TREE
+ 1) algorithm FindNode(root, value)
+ 2)
+ Pre: value is the value of the node we want to nd the parent of
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ root is the root node of the BST
+ Post: a reference to the node of value if found; otherwise 
+if root = 
+return 
+end if
+ if root.Value = value
+ return root
+ 10) else if value < root.Value
+ 11)
+ return FindNode(root.Left, value)
+ 12) else
+ 13)
+ return FindNode(root.Right, value)
+ 14) end if
+ 15) end FindNode
+ 25
+ Astute readers will have noticed that the FindNode algorithm is exactly the
+ same as the Contains algorithm (de ned in 3.2) with the modi cation that
+ we are returning a reference to a node not true or false. Given FindNode,
+ the easiest way of implementing Contains is to call FindNode and compare the
+ return value with .
+ 3.6 Finding the smallest and largest values in
+ the binary search tree
+ To nd the smallest value in a BST you simply traverse the nodes in the left
+ subtree of the BST always going left upon each encounter with a node, termi
+nating when you nd a node with no left subtree. The opposite is the case when
+ nding the largest value in the BST. Both algorithms are incredibly simple, and
+ are listed simply for completeness.
+ The base case in both FindMin, and FindMax algorithms is when the Left
+ (FindMin), or Right (FindMax) node references are in which case we have
+ reached the last node.
+ 1) algorithm FindMin(root)
+ 2)
+ Pre: root is the root node of the BST
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ root= 
+Post: the smallest value in the BST is located
+ if root.Left = 
+return root.Value
+ end if
+ FindMin(root.Left)
+ 9) end FindMin
+ www.dbooks.org
+CHAPTER 3. BINARY SEARCH TREE
+ 1) algorithm FindMax(root)
+ 2)
+ Pre: root is the root node of the BST
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ root= 
+Post: the largest value in the BST is located
+ if root.Right = 
+return root.Value
+ end if
+ FindMax(root.Right)
+ 9) end FindMax
+ 3.7 Tree Traversals
+ 26
+ There are various strategies which can be employed to traverse the items in a
+ tree; the choice of strategy depends on which node visitation order you require.
+ In this section we will touch on the traversals that DSA provides on all data
+ structures that derive from BinarySearchTree.
+ 3.7.1 Preorder
+ Whenusing the preorder algorithm, you visit the root rst, then traverse the left
+ subtree and nally traverse the right subtree. An example of preorder traversal
+ is shown in Figure 3.3.
+ 1) algorithm Preorder(root)
+ 2)
+ Pre: root is the root node of the BST
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: the nodes in the BST have been visited in preorder
+ if root = 
+yield root.Value
+ Preorder(root.Left)
+ Preorder(root.Right)
+ end if
+ 9) end Preorder
+ 3.7.2 Postorder
+ This algorithm is very similar to that described in 3.7.1, however the value
+ of the node is yielded after traversing both subtrees. An example of postorder
+ traversal is shown in Figure 3.4.
+ 1) algorithm Postorder(root)
+ 2)
+ Pre: root is the root node of the BST
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: the nodes in the BST have been visited in postorder
+ if root = 
+Postorder(root.Left)
+ Postorder(root.Right)
+ yield root.Value
+ end if
+ 9) end Postorder
+CHAPTER 3. BINARY SEARCH TREE
+ 23
+ 14
+ 7
+ 17
+ 9
+ (a)
+ 23
+ 14
+ 7
+ 23
+ 31
+ 14
+ 7
+ 9
+ 17 17
+ (b)
+ 23
+ 31
+ 14
+ 7
+ 17 17 17
+ 9
+ 9
+ (d)
+ (e)
+ Figure 3.3: Preorder visit binary search tree example
+ 27
+ 23
+ 31
+ 14
+ 7
+ 9
+ (c)
+ 23
+ 31
+ 31
+ 14
+ 7
+ 9
+ (f)
+ 31
+ www.dbooks.org
+CHAPTER 3. BINARY SEARCH TREE
+ 23
+ 14
+ 7
+ 17
+ 9
+ (a)
+ 23
+ 14
+ 7
+ 23
+ 31
+ 14
+ 7
+ 9
+ 17 17
+ (b)
+ 23
+ 31
+ 14
+ 7
+ 17 17 17
+ 9
+ 9
+ (d)
+ (e)
+ Figure 3.4: Postorder visit binary search tree example
+ 28
+ 23
+ 31
+ 14
+ 7
+ 9
+ (c)
+ 23
+ 31
+ 31
+ 14
+ 7
+ 9
+ (f)
+ 31
+CHAPTER3. BINARYSEARCHTREE 29
+ 3.7.3 Inorder
+ Anothervariationofthealgorithmsde nedin 3.7.1and 3.7.2isthatofinorder
+ traversalwherethevalueof thecurrentnode isyieldedinbetweentraversing
+ theleftsubtreeandtherightsubtree.Anexampleof inordertraversal isshown
+ inFigure3.5.
+ 23
+ 14 31
+ 7 17
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ (a) (b) (c)
+ (d) (e) (f)
+ 17 17
+ 17 17 17
+ Figure3.5: Inordervisitbinarysearchtreeexample
+ 1)algorithmInorder(root)
+ 2) Pre: root istherootnodeoftheBST
+ 3) Post:thenodesintheBSThavebeenvisitedininorder
+ 4) if root =
+ 5) Inorder(root.Left)
+ 6) yieldroot.Value
+ 7) Inorder(root.Right)
+ 8) endif
+ 9)endInorder
+ Oneof thebeautiesof inorder traversal is thatvaluesareyieldedintheir
+ comparisonorder. Inotherwords,whentraversingapopulatedBSTwiththe
+ inorderstrategy, theyieldedsequencewouldhavepropertyxi xi+1 i.
+ www.dbooks.org
+CHAPTER3. BINARYSEARCHTREE 30
+ 3.7.4 BreadthFirst
+ Traversingatree inbreadth rstorderyieldsthevaluesofallnodesofapar
+ticulardepthinthetreebeforeanydeeperones. Inotherwords,givenadepth
+ dwewouldvisitthevaluesofallnodesatdinalefttoright fashion, thenwe
+ wouldproceedtod+1andsoonuntilwehadenomorenodes tovisit. An
+ exampleofbreadth rsttraversal isshowninFigure3.6.
+ Traditionallybreadth rsttraversal is implementedusingalist(vector, re
+sizeablearray,etc)tostorethevaluesofthenodesvisitedinbreadth rstorder
+ andthenaqueuetostorethosenodesthathaveyettobevisited.
+ 23
+ 14 31
+ 7 17
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ 23
+ 14 31
+ 7
+ 9
+ (a) (b) (c)
+ (d) (e) (f)
+ 17 17
+ 17 17 17
+ Figure3.6:BreadthFirstvisitbinarysearchtreeexample
+CHAPTER 3. BINARY SEARCH TREE
+ 1) algorithm BreadthFirst(root)
+ 2)
+ Pre: root is the root node of the BST
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ 17)
+ Post: the nodes in the BST have been visited in breadth rst order
+ q 
+queue
+ while root = 
+yield root.Value
+ if root.Left= 
+q.Enqueue(root.Left)
+ end if
+ if root.Right= 
+q.Enqueue(root.Right)
+ end if
+ if !q.IsEmpty()
+ root 
+else
+ root 
+end if
+ 18) end while
+ q.Dequeue()
+ 19) end BreadthFirst
+ 3.8 Summary
+ 31
+ Abinary search tree is a good solution when you need to represent types that are
+ ordered according to some custom rules inherent to that type. With logarithmic
+ insertion, lookup, and deletion it is very e ecient. Traversal remains linear, but
+ there are many ways in which you can visit the nodes of a tree. Trees are
+ recursive data structures, so typically you will nd that many algorithms that
+ operate on a tree are recursive.
+ The run times presented in this chapter are based on a pretty big assumption- that the binary search trees left and right subtrees are reasonably balanced.
+ We can only attain logarithmic run times for the algorithms presented earlier
+ when this is true. A binary search tree does not enforce such a property, and
+ the run times for these operations on a pathologically unbalanced tree become
+ linear: such a tree is e ectively just a linked list. Later in 7 we will examine
+ an AVL tree that enforces self-balancing properties to help attain logarithmic
+ run times.
+ www.dbooks.org
+Chapter 4
+ Heap
+ Aheap can be thought of as a simple tree data structure, however a heap usually
+ employs one of two strategies:
+ 1. min heap; or
+ 2. max heap
+ Each strategy determines the properties of the tree and its values. If you
+ were to choose the min heap strategy then each parent node would have a value
+ that is 
+than its children. For example, the node at the root of the tree will
+ have the smallest value in the tree. The opposite is true for the max heap
+ strategy. In this book you should assume that a heap employs the min heap
+ strategy unless otherwise stated.
+ Unlike other tree data structures like the one de ned in 3 a heap is generally
+ implemented as an array rather than a series of nodes which each have refer
+ences to other nodes. The nodes are conceptually the same, however, having at
+ most two children. Figure 4.1 shows how the tree (not a heap data structure)
+ (12 7(3 2) 6(9 )) would be represented as an array. The array in Figure 4.1 is a
+ result of simply adding values in a top-to-bottom, left-to-right fashion. Figure
+ 4.2 shows arrows to the direct left and right child of each value in the array.
+ This chapter is very much centred around the notion of representing a tree as
+ an array and because this property is key to understanding this chapter Figure
+ 4.3 shows a step by step process to represent a tree data structure as an array.
+ In Figure 4.3 you can assume that the default capacity of our array is eight.
+ Using just an array is often not su cient as we have to be up front about the
+ size of the array to use for the heap. Often the run time behaviour of a program
+ can be unpredictable when it comes to the size of its internal data structures,
+ so we need to choose a more dynamic data structure that contains the following
+ properties:
+ 1. we can specify an initial size of the array for scenarios where we know the
+ upper storage limit required; and
+ 2. the data structure encapsulates resizing algorithms to grow the array as
+ required at run time
+ 32
+CHAPTER 4. HEAP
+ Figure 4.1: Array representation of a simple tree data structure
+ 33
+ Figure 4.2: Direct children of the nodes in an array representation of a tree data
+ structure
+ 1. Vector
+ 2. ArrayList
+ 3. List
+ Figure 4.1 does not specify how we would handle adding null references to
+ the heap. This varies from case to case; sometimes null values are prohibited
+ entirely; in other cases we may treat them as being smaller than any non-null
+ value, or indeed greater than any non-null value. You will have to resolve this
+ ambiguity yourself having studied your requirements. For the sake of clarity we
+ will avoid the issue by prohibiting null values.
+ Because we are using an array we need some way to calculate the index of a
+ parent node, and the children of a node. The required expressions for this are
+ de ned as follows for a node at index:
+ 1. (index 1)/2 (parent index)
+ 2. 2 index+1 (left child)
+ 3. 2 index+2 (right child)
+ In Figure 4.4 a) represents the calculation of the right child of 12 (2 0+2);
+ and b) calculates the index of the parent of 3 ((3 1)/2).
+ 4.1 Insertion
+ Designing an algorithm for heap insertion is simple, but we must ensure that
+ heap order is preserved after each insertion. Generally this is a post-insertion
+ operation. Inserting a value into the next free slot in an array is simple: we just
+ need to keep track of the next free index in the array as a counter, and increment
+ it after each insertion. Inserting our value into the heap is the rst part of the
+ algorithm; the second is validating heap order. In the case of min-heap ordering
+ this requires us to swap the values of a parent and its child if the value of the
+ child is < the value of its parent. We must do this for each subtree containing
+ the value we just inserted.
+ www.dbooks.org
+CHAPTER 4. HEAP
+ Figure 4.3: Converting a tree data structure to its array counterpart
+ 34
+CHAPTER 4. HEAP
+ Figure 4.4: Calculating node properties
+ 35
+ The run time e ciency for heap insertion is O(log n). The run time is a
+ by product of verifying heap order as the rst part of the algorithm (the actual
+ insertion into the array) is O(1).
+ Figure 4.5 shows the steps of inserting the values 3, 9, 12, 7, and 1 into a
+ min-heap.
+ www.dbooks.org
+CHAPTER 4. HEAP
+ 36
+ Figure 4.5: Inserting values into a min-heap
+CHAPTER 4. HEAP
+ 1) algorithm Add(value)
+ 2)
+ Pre: value is the value to add to the heap
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ Count is the number of items in the heap
+ Post: the value has been added to the heap
+ heap[Count] 
+Count 
+value
+ Count +1
+ MinHeapify()
+ 8) end Add
+ 1) algorithm MinHeapify()
+ 2)
+ Pre: Count is the number of items in the heap
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ heap is the array used to store the heap items
+ Post: the heap has preserved min heap ordering
+ i 
+Count 1
+ while i > 0 and heap[i] < heap[(i 1)/2]
+ Swap(heap[i], heap[(i 1)/2]
+ i 
+(i 
+end while
+ 1)/2
+ 10) end MinHeapify
+ 37
+ The design of the MaxHeapify algorithm is very similar to that of the Min
+Heapify algorithm, the only di erence is that the < operator in the second
+ condition of entering the while loop is changed to >.
+ 4.2 Deletion
+ Just as for insertion, deleting an item involves ensuring that heap ordering is
+ preserved. The algorithm for deletion has three steps:
+ 1. nd the index of the value to delete
+ 2. put the last value in the heap at the index location of the item to delete
+ 3. verify heap ordering for each subtree which used to include the value
+ www.dbooks.org
+CHAPTER4. HEAP 38
+ 1)algorithmRemove(value)
+ 2) Pre: valueisthevaluetoremovefromtheheap
+ 3) left,andrightareupdatedalias for2 index+1,and2 index+2respectively
+ 4) Countisthenumberof itemsintheheap
+ 5) heapisthearrayusedtostoretheheapitems
+ 6) Post:valueislocatedintheheapandremoved, true;otherwisefalse
+ 7) //step1
+ 8) index FindIndex(heap,value)
+ 9) if index<0
+ 10) returnfalse
+ 11) endif
+ 12) Count Count 1
+ 13) //step2
+ 14) heap[index] heap[Count]
+ 15) //step3
+ 16) whileleft<Countandheap[index]>heap[left]orheap[index]>heap[right]
+ 17) //promotesmallestkeyfromsubtree
+ 18) ifheap[left]<heap[right]
+ 19) Swap(heap, left, index)
+ 20) index left
+ 21) else
+ 22) Swap(heap,right, index)
+ 23) index right
+ 24) endif
+ 25) endwhile
+ 26) returntrue
+ 27)endRemove
+ Figure4.6shows theRemove algorithmvisually, removing1 fromaheap
+ containingthevalues1,3,9,12,and13. InFigure4.6youcanassumethatwe
+ havespeci edthatthebackingarrayoftheheapshouldhaveaninitialcapacity
+ ofeight.
+ Pleasenotethatinourdeletionalgorithmthatwedontdefaulttheremoved
+ valueintheheaparray. Ifyouareusingaheapforreferencetypes, i.e. objects
+ thatareallocatedonaheapyouwillwanttofreethatmemory.Thisisimportant
+ inbothunmanaged,andmanagedlanguages. Inthelatterwewillwanttonull
+ thatemptyholesothatthegarbagecollectorcanreclaimthatmemory. Ifwe
+ weretonotnullthatholethentheobjectcouldstillbereachedandthuswont
+ begarbagecollected.
+ 4.3 Searching
+ Searchingaheapismerelyamatterof traversingthe items intheheaparray
+ sequentially, sothisoperationhasaruntimecomplexityofO(n). Thesearch
+ canbethoughtofasonethatusesabreadth rsttraversalasde nedin 3.7.4
+ tovisitthenodeswithintheheaptocheckforthepresenceofaspeci editem.
+CHAPTER 4. HEAP
+ Figure 4.6: Deleting an item from a heap
+ 39
+ www.dbooks.org
+CHAPTER 4. HEAP
+ 1) algorithm Contains(value)
+ 2)
+ Pre: value is the value to search the heap for
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Count is the number of items in the heap
+ heap is the array used to store the heap items
+ Post: value is located in the heap, in which case true; otherwise false
+ i 
+0
+ while i < Count and heap[i]= value
+ i 
+i +1
+ end while
+ 10) if i < Count
+ 11)
+ return true
+ 12) else
+ 13)
+ return false
+ 14) end if
+ 15) end Contains
+ 40
+ The problem with the previous algorithm is that we dont take advantage
+ of the properties in which all values of a heap hold, that is the property of the
+ heap strategy being used. For instance if we had a heap that didnt contain the
+ value 4 we would have to exhaust the whole backing heap array before we could
+ determine that it wasnt present in the heap. Factoring in what we know about
+ the heap we can optimise the search algorithm by including logic which makes
+ use of the properties presented by a certain heap strategy.
+ Optimising to deterministically state that a value is in the heap is not that
+ straightforward, however the problem is a very interesting one. As an example
+ consider a min-heap that doesnt contain the value 5. We can only rule that the
+ value is not in the heap if 5 > the parent of the current node being inspected
+ and < the current node being inspected nodes at the current level we are
+ traversing. If this is the case then 5 cannot be in the heap and so we can
+ provide an answer without traversing the rest of the heap. If this property is
+ not satis ed for any level of nodes that we are inspecting then the algorithm
+ will indeed fall back to inspecting all the nodes in the heap. The optimisation
+ that we present can be very common and so we feel that the extra logic within
+ the loop is justi ed to prevent the expensive worse case run time.
+ The following algorithm is speci cally designed for a min-heap. To tailor the
+ algorithm for a max-heap the two comparison operations in the else if condition
+ within the inner while loop should be ipped.
+CHAPTER 4. HEAP
+ 1) algorithm Contains(value)
+ 2)
+ Pre: value is the value to search the heap for
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ 17)
+ 18)
+ 19)
+ 20)
+ 21)
+ 22)
+ 23)
+ Count is the number of items in the heap
+ heap is the array used to store the heap items
+ Post: value is located in the heap, in which case true; otherwise false
+ start 
+nodes 
+0
+ 1
+ while start < Count
+ start 
+nodes 1
+ end nodes+start
+ count 
+0
+ while start < Count and start < end
+ if value = heap[start]
+ return true
+ else if value > Parent(heap[start]) and value < heap[start]
+ count 
+end if
+ start 
+end while
+ count +1
+ start + 1
+ if count = nodes
+ return false
+ end if
+ nodes 
+24) end while
+ 25) return false
+ 26) end Contains
+ nodes 2
+ 41
+ The new Contains algorithm determines if the value is not in the heap by
+ checking whether count = nodes. In such an event where this is true then we
+ can con rm that nodes n at level i : value > Parent(n), value < n thus there
+ is no possible way that value is in the heap. As an example consider Figure 4.7.
+ If we are searching for the value 10 within the min-heap displayed it is obvious
+ that we dont need to search the whole heap to determine 9 is not present. We
+ can verify this after traversing the nodes in the second level of the heap as the
+ previous expression de ned holds true.
+ 4.4 Traversal
+ As mentioned in 4.3 traversal of a heap is usually done like that of any other
+ array data structure which our heap implementation is based upon. As a result
+ you traverse the array starting at the initial array index (0 in most languages)
+ and then visit each value within the array until you have reached the upper
+ bound of the heap. You will note that in the search algorithm that we use Count
+ as this upper bound rather than the actual physical bound of the allocated
+ array. Count is used to partition the conceptual heap from the actual array
+ implementation of the heap: we only care about the items in the heap, not the
+ whole array the latter may contain various other bits of data as a result of
+ heap mutation.
+ www.dbooks.org
+CHAPTER 4. HEAP
+ 42
+ Figure 4.7: Determining 10 is not in the heap after inspecting the nodes of Level
+ 2
+ Figure 4.8: Living and dead space in the heap backing array
+ If you have followed the advice we gave in the deletion algorithm then a
+ heap that has been mutated several times will contain some form of default
+ value for items no longer in the heap. Potentially you will have at most
+ LengthOf(heapArray) Count garbage values in the backing heap array data
+ structure. The garbage values of course vary from platform to platform. To
+ make things simple the garbage value of a reference type will be simple and 0
+ for a value type.
+ Figure 4.8 shows a heap that you can assume has been mutated many times.
+ For this example we can further assume that at some point the items in indexes
+ 3 5actually contained references to live objects of type T. In Figure 4.8
+ subscript is used to disambiguate separate objects of T.
+ From what you have read thus far you will most likely have picked up that
+ traversing the heap in any other order would be of little bene t. The heap
+ property only holds for the subtree of each node and so traversing a heap in
+ any other fashion requires some creative intervention. Heaps are not usually
+ traversed in any other way than the one prescribed previously.
+ 4.5 Summary
+ Heaps are most commonly used to implement priority queues (see 6.2 for a
+ sample implementation) and to facilitate heap sort. As discussed in both the
+ insertion 4.1 and deletion 4.2 sections a heap maintains heap order according
+ to the selected ordering strategy. These strategies are referred to as min-heap,
+CHAPTER 4. HEAP
+ 43
+ and max heap. The former strategy enforces that the value of a parent node is
+ less than that of each of its children, the latter enforces that the value of the
+ parent is greater than that of each of its children.
+ When you come across a heap and you are not told what strategy it enforces
+ you should assume that it uses the min-heap strategy. If the heap can be
+ con gured otherwise, e.g. to use max-heap then this will often require you to
+ state this explicitly. The heap abides progressively to a strategy during the
+ invocation of the insertion, and deletion algorithms. The cost of such a policy is
+ that upon each insertion and deletion we invoke algorithms that have logarithmic
+ run time complexities. While the cost of maintaining the strategy might not
+ seem overly expensive it does still come at a price. We will also have to factor
+ in the cost of dynamic array expansion at some stage. This will occur if the
+ number of items within the heap outgrows the space allocated in the heaps
+ backing array. It may be in your best interest to research a good initial starting
+ size for your heap array. This will assist in minimising the impact of dynamic
+ array resizing.
+ www.dbooks.org
+Chapter 5
+ Sets
+ A set contains a number of values, in no particular order. The values within
+ the set are distinct from one another.
+ Generally set implementations tend to check that a value is not in the set
+ before adding it, avoiding the issue of repeated values from ever occurring.
+ This section does not cover set theory in depth; rather it demonstrates brie y
+ the ways in which the values of sets can be de ned, and common operations that
+ may be performed upon them.
+ The notation A = 479120 de nesasetAwhosevaluesarelistedwithin
+ the curly braces.
+ Given the set A de ned previously we can say that 4 is a member of A
+ denoted by 4 A, and that 99 is not a member of A denoted by 99 A.
+ Often de ning a set by manually stating its members is tiresome, and more
+ importantly the set may contain a large number of values. A more concise way
+ of de ning a set and its members is by providing a series of properties that the
+ values of the set must satisfy. For example, from the de nition A = xx >
+ 0x % 2=0 the set A contains only positive integers that are even. x is an
+ alias to the current value we are inspecting and to the right hand side of are
+ the properties that x must satisfy to be in the set A. In this example, x must
+ be >0, and the remainder of the arithmetic expression x2 must be 0. You will
+ be able to note from the previous de nition of the set A that the set can contain
+ an in nite number of values, and that the values of the set A will be all even
+ integers that are a member of the natural numbers set N, where N = 123
+ .
+ Finally in this brief introduction to sets we will cover set intersection and
+ union, both of which are very common operations (amongst many others) per
+formed on sets. The union set can be de ned as follows A B = x x 
+A or x B , and intersection A B = x x A and x B . Figure 5.1
+ demonstrates set intersection and union graphically.
+ Given the set de nitions A = 123 , and B = 629 theunionofthetwo
+ sets is A B = 12369 ,andtheintersection of the two sets is A B = 2 .
+ Both set union and intersection are sometimes provided within the frame
+work associated with mainstream languages. This is the case in .NET 3.51
+ where such algorithms exist as extension methods de ned in the type Sys
+tem.Linq.Enumerable2, as a result DSA does not provide implementations of
+ 1http://www.microsoft.com/NET/
+ 2http://msdn.microsoft.com/en-us/library/system.linq.enumerable_members.aspx
+ 44
+CHAPTER 5. SETS
+ Figure 5.1: a) A B; b) A B
+ 45
+ these algorithms. Most of the algorithms de ned in System.Linq.Enumerable
+ deal mainly with sequences rather than sets exclusively.
+ Set union can be implemented as a simple traversal of both sets adding each
+ item of the two sets to a new union set.
+ 1) algorithm Union(set1, set2)
+ 2)
+ Pre: set1, and set2= 
+3)
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ union is a set
+ Post: A union of set1, and set2 has been created
+ foreach item in set1
+ union.Add(item)
+ end foreach
+ foreach item in set2
+ union.Add(item)
+ end foreach
+ 10) return union
+ 11) end Union
+ The run time of our Union algorithm is O(m + n) where m is the number
+ of items in the rst set and n is the number of items in the second set. This
+ runtime applies only to sets that exhibit O(1) insertions.
+ Set intersection is also trivial to implement. The only major thing worth
+ pointing out about our algorithm is that we traverse the set containing the
+ fewest items. We can do this because if we have exhausted all the items in the
+ smaller of the two sets then there are no more items that are members of both
+ sets, thus we have no more items to add to the intersection set.
+ www.dbooks.org
+CHAPTER 5. SETS
+ 1) algorithm Intersection(set1, set2)
+ 2)
+ Pre: set1, and set2= 
+3)
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ intersection, and smallerSet are sets
+ Post: An intersection of set1, and set2 has been created
+ if set1.Count < set2.Count
+ smallerSet 
+else
+ smallerSet 
+end if
+ set1
+ set2
+ foreach item in smallerSet
+ if set1.Contains(item) and set2.Contains(item)
+ intersection.Add(item)
+ end if
+ 13) end foreach
+ 14) return intersection
+ 15) end Intersection
+ 46
+ The run time of our Intersection algorithm is O(n) where n is the number
+ of items in the smaller of the two sets. Just like our Union algorithm a linear
+ runtime can only be attained when operating on a set with O(1) insertion.
+ 5.1 Unordered
+ Sets in the general sense do not enforce the explicit ordering of their mem
+bers. For example the members of B = 629 conform to no ordering scheme
+ because it is not required.
+ Most libraries provide implementations of unordered sets and so DSA does
+ not; we simply mention it here to disambiguate between an unordered set and
+ ordered set.
+ We will only look at insertion for an unordered set and cover brie y why a
+ hash table is an e cient data structure to use for its implementation.
+ 5.1.1 Insertion
+ Anunordered set can be e ciently implemented using a hash table as its backing
+ data structure. As mentioned previously we only add an item to a set if that
+ item is not already in the set, so the backing data structure we use must have
+ a quick look up and insertion run time complexity.
+ A hash map generally provides the following:
+ 1. O(1) for insertion
+ 2. approaching O(1) for look up
+ The above depends on how good the hashing algorithm of the hash table
+ is, but most hash tables employ incredibly e cient general purpose hashing
+ algorithms and so the run time complexities for the hash table in your library
+ of choice should be very similar in terms of e ciency.
+CHAPTER 5. SETS
+ 5.2 Ordered
+ 47
+ An ordered set is similar to an unordered set in the sense that its members are
+ distinct, but an ordered set enforces some prede ned comparison on each of its
+ members to produce a set whose members are ordered appropriately.
+ In DSA 0.5 and earlier we used a binary search tree (de ned in 3) as the
+ internal backing data structure for our ordered set. From versions 0.6 onwards
+ we replaced the binary search tree with an AVL tree primarily because AVL is
+ balanced.
+ The ordered set has its order realised by performing an inorder traversal
+ upon its backing tree data structure which yields the correct ordered sequence
+ of set members.
+ Because an ordered set in DSA is simply a wrapper for an AVL tree that
+ additionally ensures that the tree contains unique items you should read 7 to
+ learn more about the run time complexities associated with its operations.
+ 5.3 Summary
+ Sets provide a way of having a collection of unique objects, either ordered or
+ unordered.
+ When implementing a set (either ordered or unordered) it is key to select
+ the correct backing data structure. As we discussed in 5.1.1 because we check
+ rst if the item is already contained within the set before adding it we need
+ this check to be as quick as possible. For unordered sets we can rely on the use
+ of a hash table and use the key of an item to determine whether or not it is
+ already contained within the set. Using a hash table this check results in a near
+ constant run time complexity. Ordered sets cost a little more for this check,
+ however the logarithmic growth that we incur by using a binary search tree as
+ its backing data structure is acceptable.
+ Another key property of sets implemented using the approach we describe is
+ that both have favourably fast look-up times. Just like the check before inser
+tion, for a hash table this run time complexity should be near constant. Ordered
+ sets as described in 3 perform a binary chop at each stage when searching for
+ the existence of an item yielding a logarithmic run time.
+ Wecanuse sets to facilitate many algorithms that would otherwise be a little
+ less clear in their implementation. For example in 11.4 we use an unordered
+ set to assist in the construction of an algorithm that determines the number of
+ repeated words within a string.
+ www.dbooks.org
+Chapter 6
+ Queues
+ Queues are an essential data structure that are found in vast amounts of soft
+ware from user mode to kernel mode applications that are core to the system.
+ Fundamentally they honour a rst in rst out (FIFO) strategy, that is the item
+ rst put into the queue will be the rst served, the second item added to the
+ queue will be the second to be served and so on.
+ A traditional queue only allows you to access the item at the front of the
+ queue; when you add an item to the queue that item is placed at the back of
+ the queue.
+ Historically queues always have the following three core methods:
+ Enqueue: places an item at the back of the queue;
+ Dequeue: retrieves the item at the front of the queue, and removes it from the
+ queue;
+ Peek: 1 retrieves the item at the front of the queue without removing it from
+ the queue
+ As an example to demonstrate the behaviour of a queue we will walk through
+ a scenario whereby we invoke each of the previously mentioned methods observ
+ing the mutations upon the queue data structure. The following list describes
+ the operations performed upon the queue in Figure 6.1:
+ 1. Enqueue(10)
+ 2. Enqueue(12)
+ 3. Enqueue(9)
+ 4. Enqueue(8)
+ 5. Enqueue(3)
+ 6. Dequeue()
+ 7. Peek()
+ 1This operation is sometimes referred to as Front
+ 48
+CHAPTER 6. QUEUES
+ 8. Enqueue(33)
+ 9. Peek()
+ 10. Dequeue()
+ 6.1 A standard queue
+ 49
+ A queue is implicitly like that described prior to this section. In DSA we dont
+ provide a standard queue because queues are so popular and such a core data
+ structure that you will nd pretty much every mainstream library provides a
+ queue data structure that you can use with your language of choice. In this
+ section we will discuss how you can, if required, implement an e cient queue
+ data structure.
+ The main property of a queue is that we have access to the item at the
+ front of the queue. The queue data structure can be e ciently implemented
+ using a singly linked list (de ned in 2.1). A singly linked list provides O(1)
+ insertion and deletion run time complexities. The reason we have an O(1) run
+ time complexity for deletion is because we only ever remove items from the front
+ of queues (with the Dequeue operation). Since we always have a pointer to the
+ item at the head of a singly linked list, removal is simply a case of returning
+ the value of the old head node, and then modifying the head pointer to be the
+ next node of the old head node. The run time complexity for searching a queue
+ remains the same as that of a singly linked list: O(n).
+ 6.2 Priority Queue
+ Unlike a standard queue where items are ordered in terms of who arrived rst,
+ a priority queue determines the order of its items by using a form of custom
+ comparer to see which item has the highest priority. Other than the items in a
+ priority queue being ordered by priority it remains the same as a normal queue:
+ you can only access the item at the front of the queue.
+ Asensible implementation of a priority queue is to use a heap data structure
+ (de ned in 4). Using a heap we can look at the rst item in the queue by simply
+ returning the item at index 0 within the heap array. A heap provides us with the
+ ability to construct a priority queue where the items with the highest priority
+ are either those with the smallest value, or those with the largest.
+ 6.3 Double Ended Queue
+ Unlike the queues we have talked about previously in this chapter a double
+ ended queue allows you to access the items at both the front, and back of the
+ queue. A double ended queue is commonly known as a deque which is the name
+ we will here on in refer to it as.
+ A deque applies no prioritization strategy to its items like a priority queue
+ does, items are added in order to either the front of back of the deque. The
+ former properties of the deque are denoted by the programmer utilising the data
+ structures exposed interface.
+ www.dbooks.org
+CHAPTER 6. QUEUES
+ Figure 6.1: Queue mutations
+ 50
+CHAPTER 6. QUEUES
+ 51
+ Deques provide front and back speci c versions of common queue operations,
+ e.g. you may want to enqueue an item to the front of the queue rather than
+ the back in which case you would use a method with a name along the lines
+ of EnqueueFront. The following list identi es operations that are commonly
+ supported by deques:
+ EnqueueFront
+ EnqueueBack
+ DequeueFront
+ DequeueBack
+ PeekFront
+ PeekBack
+ Figure 6.2 shows a deque after the invocation of the following methods (in
+order):
+ 1. EnqueueBack(12)
+ 2. EnqueueFront(1)
+ 3. EnqueueBack(23)
+ 4. EnqueueFront(908)
+ 5. DequeueFront()
+ 6. DequeueBack()
+ The operations have a one-to-one translation in terms of behaviour with
+ those of a normal queue, or priority queue. In some cases the set of algorithms
+ that add an item to the back of the deque may be named as they are with
+ normal queues, e.g. EnqueueBack may simply be called Enqueue an so on. Some
+ frameworks also specify explicit behaviours that data structures must adhere to.
+ This is certainly the case in .NET where most collections implement an interface
+ which requires the data structure to expose a standard Add method. In such
+ a scenario you can safely assume that the Add method will simply enqueue an
+ item to the back of the deque.
+ With respect to algorithmic run time complexities a deque is the same as
+ a normal queue. That is enqueueing an item to the back of a the queue is
+ O(1), additionally enqueuing an item to the front of the queue is also an O(1)
+ operation.
+ A deque is a wrapper data structure that uses either an array, or a doubly
+ linked list. Using an array as the backing data structure would require the pro
+grammer to be explicit about the size of the array up front, this would provide
+ an obvious advantage if the programmer could deterministically state the maxi
+mum number of items the deque would contain at any one time. Unfortunately
+ in most cases this doesnt hold, as a result the backing array will inherently
+ incur the expense of invoking a resizing algorithm which would most likely be
+ an O(n) operation. Such an approach would also leave the library developer
+ www.dbooks.org
+CHAPTER 6. QUEUES
+ Figure 6.2: Deque data structure after several mutations
+ 52
+CHAPTER 6. QUEUES
+ 53
+ to look at array minimization techniques as well, it could be that after several
+ invocations of the resizing algorithm and various mutations on the deque later
+ that we have an array taking up a considerable amount of memory yet we are
+ only using a few small percentage of that memory. An algorithm described
+ would also be O(n) yet its invocation would be harder to gauge strategically.
+ To bypass all the aforementioned issues a deque typically uses a doubly
+ linked list as its baking data structure. While a node that has two pointers
+ consumes more memory than its array item counterpart it makes redundant the
+ need for expensive resizing algorithms as the data structure increases in size
+ dynamically. With a language that targets a garbage collected virtual machine
+ memory reclamation is an opaque process as the nodes that are no longer ref
+erenced become unreachable and are thus marked for collection upon the next
+ invocation of the garbage collection algorithm. With C++ or any other lan
+guage that uses explicit memory allocation and deallocation it will be up to the
+ programmer to decide when the memory that stores the object can be freed.
+ 6.4 Summary
+ With normal queues we have seen that those who arrive rst are dealt with rst;
+ that is they are dealt with in a rst-in- rst-out (FIFO) order. Queues can be
+ ever so useful; for example the Windows CPU scheduler uses a di erent queue
+ for each priority of process to determine which should be the next process to
+ utilise the CPU for a speci ed time quantum. Normal queues have constant
+ insertion and deletion run times. Searching a queue is fairly unusual typically
+ you are only interested in the item at the front of the queue. Despite that,
+ searching is usually exposed on queues and typically the run time is linear.
+ In this chapter we have also seen priority queues where those at the front
+ of the queue have the highest priority and those near the back have the lowest.
+ One implementation of a priority queue is to use a heap data structure as its
+ backing store, so the run times for insertion, deletion, and searching are the
+ same as those for a heap (de ned in 4).
+ Queues are a very natural data structure, and while they are fairly primitive
+ they can make many problems a lot simpler. For example the breadth rst
+ search de ned in 3.7.4 makes extensive use of queues.
+ www.dbooks.org
+Chapter 7
+ AVL Tree
+ In the early 60s G.M. Adelson-Velsky and E.M. Landis invented the rst self
+balancing binary search tree data structure, calling it AVL Tree.
+ AnAVLtreeis a binary search tree (BST, de ned in 3) with a self-balancing
+ condition stating that the di erence between the height of the left and right
+ subtrees cannot be no more than one, see Figure 7.1. This condition, restored
+ after each tree modi cation, forces the general shape of an AVL tree. Before
+ continuing, let us focus on why balance is so important. Consider a binary
+ search tree obtained by starting with an empty tree and inserting some values
+ in the following order 1,2,3,4,5.
+ The BST in Figure 7.2 represents the worst case scenario in which the run
+ning time of all common operations such as search, insertion and deletion are
+ O(n). By applying a balance condition we ensure that the worst case running
+ time of each common operation is O(log n). The height of an AVL tree with n
+ nodes is O(log n) regardless of the order in which values are inserted.
+ The AVLbalance condition, known also as the node balance factor represents
+ an additional piece of information stored for each node. This is combined with
+ a technique that e ciently restores the balance condition for the tree. In an
+ AVL tree the inventors make use of a well-known technique called tree rotation.
+ h
+ h+1
+ Figure 7.1: The left and right subtrees of an AVL tree di er in height by at
+ most 1
+ 54
+CHAPTER 7. AVL TREE
+ 1
+ Figure 7.2: Unbalanced binary search tree
+ 2
+ 1
+ 4
+ 3
+ a)
+ Figure 7.3: Avl trees, insertion order:-a)1,2,3,4,5-b)1,5,4,3,2
+ 55
+ 2
+ 5
+ 3
+ 4
+ 1
+ 5
+ 2
+ 4
+ 3
+ b)
+ 5
+ www.dbooks.org
+CHAPTER 7. AVL TREE
+ 7.1 Tree Rotations
+ 56
+ Atree rotation is a constant time operation on a binary search tree that changes
+ the shape of a tree while preserving standard BST properties. There are left and
+ right rotations both of them decrease the height of a BST by moving smaller
+ subtrees down and larger subtrees up.
+ 14
+ 8
+ 2
+ 11
+ 24
+ Figure 7.4: Tree left and right rotations
+ 8
+ Right Rotation
+ 2
+ Left Rotation
+ 14
+ 11
+ 24
+CHAPTER 7. AVL TREE
+ 1) algorithm LeftRotation(node)
+ 2)
+ Pre: node.Right ! = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: node.Right is the new root of the subtree,
+ node has become node.Rights left child and,
+ BST properties are preserved
+ RightNode 
+node.Right 
+node.Right
+ RightNode.Left
+ RightNode.Left 
+9) end LeftRotation
+ node
+ 1) algorithm RightRotation(node)
+ 2)
+ Pre: node.Left ! = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: node.Left is the new root of the subtree,
+ node has become node.Lefts right child and,
+ BST properties are preserved
+ LeftNode node.Left
+ node.Left 
+LeftNode.Right
+ LeftNode.Right 
+9) end RightRotation
+ node
+ 57
+ The right and left rotation algorithms are symmetric. Only pointers are
+ changed by a rotation resulting in an O(1) runtime complexity; the other elds
+ present in the nodes are not changed.
+ 7.2 Tree Rebalancing
+ The algorithm that we present in this section veri es that the left and right
+ subtrees di er at most in height by 1. If this property is not present then we
+ perform the correct rotation.
+ Notice that we use two new algorithms that represent double rotations.
+ These algorithms are named LeftAndRightRotation, and RightAndLeftRotation.
+ The algorithms are self documenting in their names, e.g. LeftAndRightRotation
+ rst performs a left rotation and then subsequently a right rotation.
+ www.dbooks.org
+CHAPTER 7. AVL TREE
+ 1) algorithm CheckBalance(current)
+ 2)
+ Pre: current is the node to start from balancing
+ 3)
+ 58
+ Post: current height has been updated while tree balance is if needed
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ restored through rotations
+ if current.Left = and current.Right = 
+current.Height =-1;
+ else
+ current.Height = Max(Height(current.Left),Height(currentRight)) + 1
+ end if
+ 10) if Height(current.Left)- Height(current.Right) > 1
+ 11)
+ if Height(current.Left.Left)- Height(current.Left.Right) > 0
+ 12)
+ 13)
+ 14)
+ 15)
+ RightRotation(current)
+ else
+ LeftAndRightRotation(current)
+ end if
+ 16) else if Height(current.Left)- Height(current.Right) < 1
+ 17)
+ if Height(current.Right.Left)- Height(current.Right.Right) < 0
+ 18)
+ 19)
+ 20)
+ 21)
+ 22) end if
+ LeftRotation(current)
+ else
+ RightAndLeftRotation(current)
+ end if
+ 23) end CheckBalance
+ 7.3 Insertion
+ AVL insertion operates rst by inserting the given value the same way as BST
+ insertion and then by applying rebalancing techniques if necessary. The latter
+ is only performed if the AVL property no longer holds, that is the left and right
+ subtrees height di er by more than 1. Each time we insert a node into an AVL
+ tree:
+ 1. We go down the tree to nd the correct point at which to insert the node,
+ in the same manner as for BST insertion; then
+ 2. we travel up the tree from the inserted node and check that the node
+ balancing property has not been violated; if the property hasnt been
+ violated then we need not rebalance the tree, the opposite is true if the
+ balancing property has been violated.
+CHAPTER 7. AVL TREE
+ 1) algorithm Insert(value)
+ 2)
+ Pre: value has passed custom type checks for type T
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: value has been placed in the correct location in the tree
+ if root = 
+root 
+else
+ node(value)
+ InsertNode(root, value)
+ end if
+ 9) end Insert
+ 1) algorithm InsertNode(current, value)
+ 2)
+ Pre: current is the node to start from
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: value has been placed in the correct location in the tree while
+ preserving tree balance
+ if value < current.Value
+ if current.Left = 
+current.Left 
+else
+ node(value)
+ InsertNode(current.Left, value)
+ 10)
+ end if
+ 11) else
+ 12)
+ if current.Right = 
+13)
+ 14)
+ 15)
+ 16)
+ current.Right 
+else
+ InsertNode(current.Right, value)
+ end if
+ 17) end if
+ 18) CheckBalance(current)
+ 19) end InsertNode
+ 7.4 Deletion
+ 59
+ node(value)
+ Our balancing algorithm is like the one presented for our BST (de ned in 3.3).
+ The major di erence is that we have to ensure that the tree still adheres to the
+ AVL balance property after the removal of the node. If the tree doesnt need
+ to be rebalanced and the value we are removing is contained within the tree
+ then no further step are required. However, when the value is in the tree and
+ its removal upsets the AVL balance property then we must perform the correct
+ rotation(s).
+ www.dbooks.org
+CHAPTER7. AVLTREE 60
+ 1)algorithmRemove(value)
+ 2) Pre: valueisthevalueofthenodetoremove,root istherootnode
+ 3) oftheAvl
+ 4) Post:nodewithvalueisremovedandtreerebalancedif foundinwhich
+ 5) caseyieldstrue,otherwisefalse
+ 6) nodeToRemove root
+ 7) parent
+ 8) Stackpath root
+ 9) whilenodeToRemove= andnodeToRemoveValue=Value
+ 10) parent=nodeToRemove
+ 11) if value<nodeToRemove.Value
+ 12) nodeToRemove nodeToRemove.Left
+ 13) else
+ 14) nodeToRemove nodeToRemove.Right
+ 15) endif
+ 16) path.Push(nodeToRemove)
+ 17) endwhile
+ 18) ifnodeToRemove=
+ 19) returnfalse//valuenot inAvl
+ 20) endif
+ 21) parent FindParent(value)
+ 22) if count=1//countkeepstrackofthe#ofnodesintheAvl
+ 23) root //weareremovingtheonlynodeintheAvl
+ 24) elseifnodeToRemove.Left= andnodeToRemove.Right=null
+ 25) //case#1
+ 26) ifnodeToRemove.Value<parent.Value
+ 27) parent.Left
+ 28) else
+ 29) parent.Right
+ 30) endif
+ 31) elseifnodeToRemove.Left= andnodeToRemove.Right=
+ 32) //case#2
+ 33) ifnodeToRemove.Value<parent.Value
+ 34) parent.Left nodeToRemove.Right
+ 35) else
+ 36) parent.Right nodeToRemove.Right
+ 37) endif
+ 38) elseifnodeToRemove.Left= andnodeToRemove.Right=
+ 39) //case#3
+ 40) ifnodeToRemove.Value<parent.Value
+ 41) parent.Left nodeToRemove.Left
+ 42) else
+ 43) parent.Right nodeToRemove.Left
+ 44) endif
+ 45) else
+ 46) //case#4
+ 47) largestValue nodeToRemove.Left
+ 48) whilelargestValue.Right=
+ 49) // ndthelargestvalueintheleftsubtreeofnodeToRemove
+ 50) largestValue largestValue.Right
+CHAPTER 7. AVL TREE
+ 51)
+ 52)
+ 53)
+ 54)
+ end while
+ // set the parents Right pointer of largestV alue to 
+FindParent(largestV alue.Value).Right 
+nodeToRemove.Value 
+55) end if
+ 56) while pathCount > 0
+ 57)
+ 61
+ largestV alue.Value
+ CheckBalance(path.Pop()) // we trackback to the root node check balance
+ 58) end while
+ 59) count count 1
+ 60) return true
+ 61) end Remove
+ 7.5 Summary
+ The AVL tree is a sophisticated self balancing tree. It can be thought of as
+ the smarter, younger brother of the binary search tree. Unlike its older brother
+ the AVL tree avoids worst case linear complexity runtimes for its operations.
+ The AVL tree guarantees via the enforcement of balancing algorithms that the
+ left and right subtrees di er in height by at most 1 which yields at most a
+ logarithmic runtime complexity.
+ www.dbooks.org
+Part II
+ Algorithms
+ 62
+Chapter 8
+ Sorting
+ All the sorting algorithms in this chapter use data structures of a speci c type
+ to demonstrate sorting, e.g. a 32 bit integer is often used as its associated
+ operations (e.g. <, >, etc) are clear in their behaviour.
+ The algorithms discussed can easily be translated into generic sorting algo
+rithms within your respective language of choice.
+ 8.1 Bubble Sort
+ One of the most simple forms of sorting is that of comparing each item with
+ every other item in some list, however as the description may imply this form
+ of sorting is not particularly e ecient O(n2). In its most simple form bubble
+ sort can be implemented as two loops.
+ 1) algorithm BubbleSort(list)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: list has been sorted into values of ascending order
+ for i 0 to listCount 1
+ for j 
+0 to listCount 1
+ if list[i] < list[j]
+ Swap(list[i] list[j])
+ end if
+ end for
+ 10) end for
+ 11) return list
+ 12) end BubbleSort
+ 8.2 Merge Sort
+ Merge sort is an algorithm that has a fairly e cient space time complexity
+O(n log n) and is fairly trivial to implement. The algorithm is based on splitting
+ a list, into two similar sized lists (left, and right) and sorting each list and then
+ merging the sorted lists back together.
+ Note: the function MergeOrdered simply takes two ordered lists and makes
+ them one.
+ 63
+ www.dbooks.org
+CHAPTER8. SORTING 64
+ 54 2 74 75 4
+ 0 1 2 3 4
+ 54 2 74 75 4
+ 0 1 2 3 4
+ 54 2 75 74 4
+ 0 1 2 3 4
+ 54 75 2 74 4
+ 0 1 2 3 4
+ 75 54 2 74 4
+ 0 1 2 3 4
+ 75 54 2 74 4
+ 0 1 2 3 4
+ 75 54 2 74 4
+ 0 1 2 3 4
+ 75 54 74 2 4
+ 0 1 2 3 4
+ 75 74 54 2 4
+ 0 1 2 3 4
+ 75 74 54 2 4
+ 0 1 2 3 4
+ 75 74 54 4 2
+ 0 1 2 3 4
+ 75 74 54 4 2
+ 0 1 2 3 4
+ 75 74 54 4 2
+ 0 1 2 3 4
+ 75 74 54 4 2
+ 0 1 2 3 4
+ 75 74 54 4 2
+ 0 1 2 3 4
+ Figure8.1:BubbleSortIterations
+ 1)algorithmMergesort(list)
+ 2) Pre: list =
+ 3) Post: listhasbeensortedintovaluesofascendingorder
+ 4) if list.Count=1//alreadysorted
+ 5) returnlist
+ 6) endif
+ 7) m list.Count 2
+ 8) left list(m)
+ 9) right list(list.Count m)
+ 10) fori 0toleft.Count 1
+ 11) left[i] list[i]
+ 12) endfor
+ 13) fori 0toright.Count 1
+ 14) right[i] list[i]
+ 15) endfor
+ 16) left Mergesort(left)
+ 17) right Mergesort(right)
+ 18) returnMergeOrdered(left,right)
+ 19)endMergesort
+CHAPTER 8. SORTING
+ 4
+ 4
+ 75
+ 4
+ 75
+ 75
+ 74
+ 2
+ 54
+ 74
+ 74
+ 2
+ 54
+ Divide
+ 2
+ 54
+ Figure 8.2: Merge Sort Divide et Impera Approach
+ 8.3 Quick Sort
+ 65
+ 4
+ 75
+ 2
+ 4
+ 54
+ 74
+ 75
+ 2
+ 54
+ 2
+ 74
+ 2
+ 54
+ 5
+ 4
+ Impera (Merge)
+ Quick sort is one of the most popular sorting algorithms based on divide et
+ impera strategy, resulting in an O(n log n) complexity. The algorithm starts by
+ picking an item, called pivot, and moving all smaller items before it, while all
+ greater elements after it. This is the main quick sort operation, called partition,
+ recursively repeated on lesser and greater sub lists until their size is one or zero- in which case the list is implicitly sorted.
+ Choosing an appropriate pivot, as for example the median element is funda
+mental for avoiding the drastically reduced performance of O(n2).
+ www.dbooks.org
+CHAPTER 8. SORTING
+ 4
+ 2
+ Pivot
+ 2
+ Pivot
+ 4
+ Figure 8.3: Quick Sort Example (pivot median strategy)
+ 1) algorithm QuickSort(list)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ 17)
+ Post: list has been sorted into values of ascending order
+ if list.Count = 1 // already sorted
+ return list
+ end if
+ pivot MedianValue(list)
+ for i 0 to list.Count 1
+ if list[i] = pivot
+ equal.Insert(list[i])
+ end if
+ if list[i] < pivot
+ less.Insert(list[i])
+ end if
+ if list[i] > pivot
+ greater.Insert(list[i])
+ end if
+ 18) end for
+ 19) return Concatenate(QuickSort(less), equal, QuickSort(greater))
+ 20) end Quicksort
+ 66
+ 4
+ 75
+ 74
+ 2
+ 54
+ Pivot
+ 4
+ 4
+ 4
+ 4
+ 75
+ 74
+ 2
+ 54
+ Pivot
+ 54
+ 74
+ 2
+ Pivot
+ 2
+ 2
+ 74
+ 54
+ Pivot
+ 54
+ Pivot
+ 74
+ 75
+ 75
+ 75
+ 74
+ 75
+ Pivot
+ 74
+ 2
+ 4
+ 54
+ 74
+ 75
+ 75
+ Pivot
+CHAPTER 8. SORTING
+ 8.4 Insertion Sort
+ 67
+ Insertion sort is a somewhat interesting algorithm with an expensive runtime of
+ O(n2). It can be best thought of as a sorting scheme similar to that of sorting
+ a hand of playing cards, i.e. you take one card and then look at the rest with
+ the intent of building up an ordered set of cards in your hand.
+ 4
+ 4
+ 4
+ 1) algorithm Insertionsort(list)
+ 2)
+ Pre: list = 
+3)
+ 75
+ 75
+ 74
+ 74
+ 2
+ 54
+ 2
+ 75
+ 2
+ 54
+ 4
+ 75
+ 2
+ 4
+ Figure 8.4: Insertion Sort Iterations
+ Post: list has been sorted into values of ascending order
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ unsorted 
+1
+ while unsorted < list.Count
+ hold 
+i 
+list[unsorted]
+ unsorted 1
+ while i 0 and hold <list[i]
+ list[i + 1] 
+i 
+i 
+end while
+ list[i + 1] 
+1
+ list[i]
+ hold
+ unsorted 
+14) end while
+ 15) return list
+ 16) end Insertionsort
+ unsorted + 1
+ 74
+ 74
+ 74
+ 2
+ 54
+ 54
+ 75
+ 54
+ 4
+ 75
+ 74
+ 2
+ 4
+ 54
+ 2
+ 54
+ 74
+ 75
+ www.dbooks.org
+CHAPTER 8. SORTING
+ 8.5 Shell Sort
+ 68
+ Put simply shell sort can be thought of as a more e cient variation of insertion
+ sort as described in 8.4, it achieves this mainly by comparing items of varying
+ distances apart resulting in a run time complexity of O(n log2 n).
+ Shell sort is fairly straight forward but may seem somewhat confusing at
+ rst as it di ers from other sorting algorithms in the way it selects items to
+ compare. Figure 8.5 shows shell sort being ran on an array of integers, the red
+ coloured square is the current value we are holding.
+ 1) algorithm ShellSort(list)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ Post: list has been sorted into values of ascending order
+ increment 
+list.Count 2
+ while increment = 0
+ current 
+increment
+ while current < list.Count
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ 14)
+ 15)
+ 16)
+ 17)
+ hold 
+i 
+list[current]
+ current increment
+ while i 0 and hold <list[i]
+ list[i + increment] 
+i
+ =increment
+ end while
+ list[i + increment] 
+current 
+end while
+ current + 1
+ increment = 2
+ 18) end while
+ 19) return list
+ 20) end ShellSort
+ 8.6 Radix Sort
+ list[i]
+ hold
+ Unlike the sorting algorithms described previously radix sort uses buckets to
+ sort items, each bucket holds items with a particular property called a key.
+ Normally a bucket is a queue, each time radix sort is performed these buckets
+ are emptied starting the smallest key bucket to the largest. When looking at
+ items within a list to sort we do so by isolating a speci c key, e.g. in the example
+ we are about to show we have a maximum of three keys for all items, that is
+ the highest key we need to look at is hundreds. Because we are dealing with, in
+ this example base 10 numbers we have at any one point 10 possible key values
+ 0 9 each of which has their own bucket. Before we show you this rst simple
+ version of radix sort let us clarify what we mean by isolating keys. Given the
+ number 102 if we look at the rst key, the ones then we can see we have two of
+ them, progressing to the next key- tens we can see that the number has zero
+ of them, nally we can see that the number has a single hundred. The number
+ used as an example has in total three keys:
+CHAPTER 8. SORTING
+ 69
+ Figure 8.5: Shell sort
+ www.dbooks.org
+CHAPTER 8. SORTING
+ 1. Ones
+ 2. Tens
+ 3. Hundreds
+ 70
+ For further clari cation what if we wanted to determine how many thousands
+ the number 102 has? Clearly there are none, but often looking at a number as
+ nal like we often do it is not so obvious so when asked the question how many
+ thousands does 102 have you should simply pad the number with a zero in that
+ location, e.g. 0102 here it is more obvious that the key value at the thousands
+ location is zero.
+ The last thing to identify before we actually show you a simple implemen
+tation of radix sort that works on only positive integers, and requires you to
+ specify the maximum key size in the list is that we need a way to isolate a
+ speci c key at any one time. The solution is actually very simple, but its not
+ often you want to isolate a key in a number so we will spell it out clearly
+ here. A key can be accessed from any integer with the following expression:
+ key 
+(number keyToAccess) % 10. As a simple example lets say that we
+ want to access the tens key of the number 1290, the tens column is key 10 and
+ so after substitution yields key 
+(1290 10) % 10 = 9. The next key to
+ look at for a number can be attained by multiplying the last key by ten working
+ left to right in a sequential manner. The value of key is used in the following
+ algorithm to work out the index of an array of queues to enqueue the item into.
+ 1) algorithm Radix(list, maxKeySize)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ 10)
+ 11)
+ 12)
+ 13)
+ maxKeySize 0 and represents the largest key size in the list
+ Post: list has been sorted
+ queues 
+Queue[10]
+ indexOfKey 1
+ fori 
+0 to maxKeySize 1
+ foreach item in list
+ queues[GetQueueIndex(item, indexOfKey)].Enqueue(item)
+ end foreach
+ list 
+CollapseQueues(queues)
+ ClearQueues(queues)
+ indexOfKey indexOfKey 10
+ 14) end for
+ 15) return list
+ 16) end Radix
+ Figure 8.6 shows the members of queues from the algorithm described above
+ operating on the list whose members are 90128791123 and 61, the key we
+ are interested in for each number is highlighted. Omitted queues in Figure 8.6
+ mean that they contain no items.
+ 8.7 Summary
+ Throughout this chapter we have seen many di erent algorithms for sorting
+ lists, some are very e cient (e.g. quick sort de ned in 8.3), some are not (e.g.
+CHAPTER 8. SORTING
+ Figure 8.6: Radix sort base 10 algorithm
+ bubble sort de ned in 8.1).
+ 71
+ Selecting the correct sorting algorithm is usually denoted purely by e ciency,
+ e.g. you would always choose merge sort over shell sort and so on. There are
+ also other factors to look at though and these are based on the actual imple
+mentation. Some algorithms are very nicely expressed in a recursive fashion,
+ however these algorithms ought to be pretty e cient, e.g. implementing a linear,
+ quadratic, or slower algorithm using recursion would be a very bad idea.
+ If you want to learn more about why you should be very, very careful when
+ implementing recursive algorithms see Appendix C.
+ www.dbooks.org
+Chapter 9
+ Numeric
+ Unless stated otherwise the alias n denotes a standard 32 bit integer.
+ 9.1 Primality Test
+ A simple algorithm that determines whether or not a given integer is a prime
+ number, e.g. 2, 5, 7, and 13 are all prime numbers, however 6 is not as it can
+ be the result of the product of two numbers that are < 6.
+ In an attempt to slow down the inner loop the n is used as the upper
+ bound.
+ 1) algorithm IsPrime(n)
+ 2)
+ Post: n is determined to be a prime or not
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ for i 2 to n do
+ for j 
+1 to sqrt(n) do
+ if i j =n
+ return false
+ end if
+ end for
+ end for
+ 10) end IsPrime
+ 9.2 Base conversions
+ DSA contains a number of algorithms that convert a base 10 number to its
+ equivalent binary, octal or hexadecimal form. For example 7810 has a binary
+ representation of 10011102.
+ Table 9.1 shows the algorithm trace when the number to convert to binary
+ is 74210.
+ 72
+CHAPTER 9. NUMERIC
+ 1) algorithm ToBinary(n)
+ 2)
+ Pre: n 0
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ Post: n has been converted into its base 2 representation
+ while n > 0
+ listAdd(n % 2)
+ n n2
+ end while
+ return Reverse(list)
+ 9) end ToBinary
+ n
+ 742 
+371 
+185 
+92
+ 46
+ 23
+ 11
+ 5
+ 2
+ 1
+ Table 9.1: Algorithm trace of ToBinary
+ 73
+ list
+ 0 
+01 
+011 
+0110 
+01101
+ 011011
+ 0110111
+ 01101111
+ 011011110
+ 0110111101
+ 9.3 Attaining the greatest common denomina
+tor of two numbers
+ Afairly routine problem in mathematics is that of nding the greatest common
+ denominator of two integers, what we are essentially after is the greatest number
+ which is a multiple of both, e.g. the greatest common denominator of 9, and
+ 15 is 3. One of the most elegant solutions to this problem is based on Euclids
+ algorithm that has a run time complexity of O(n2).
+ 1) algorithm GreatestCommonDenominator(m, n)
+ 2)
+ Pre: m and n are integers
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ Post: the greatest common denominator of the two integers is calculated
+ if n = 0
+ return m
+ end if
+ return GreatestCommonDenominator(n, m % n)
+ 8) end GreatestCommonDenominator
+ www.dbooks.org
+CHAPTER 9. NUMERIC
+ 74
+ 9.4 Computing the maximum value for a num
+ber of a speci c base consisting of N digits
+ This algorithm computes the maximum value of a number for a given number
+ of digits, e.g. using the base 10 system the maximum number we can have
+ made up of 4 digits is the number 999910. Similarly the maximum number that
+ consists of 4 digits for a base 2 number is 11112 which is 1510.
+ The expression by which we can compute this maximum value for N digits
+ is: BN 1. In the previous expression B is the number base, and N is the
+ number of digits. As an example if we wanted to determine the maximum value
+ for a hexadecimal number (base 16) consisting of 6 digits the expression would
+ be as follows: 166 1. The maximum value of the previous example would be
+ represented as FFFFFF16 which yields 1677721510.
+ In the following algorithm numberBase should be considered restricted to
+ the values of 2, 8, 9, and 16. For this reason in our actual implementation
+ numberBase has an enumeration type. The Base enumeration type is de ned
+ as:
+ Base = Binary 2Octal 8Decimal 10Hexadecimal 16
+ The reason we provide the de nition of Base is to give you an idea how this
+ algorithm can be modelled in a more readable manner rather than using various
+ checks to determine the correct base to use. For our implementation we cast the
+ value of numberBase to an integer, as such we extract the value associated with
+ the relevant option in the Base enumeration. As an example if we were to cast
+ the option Octal to an integer we would get the value 8. In the algorithm listed
+ below the cast is implicit so we just use the actual argument numberBase.
+ 1) algorithm MaxValue(numberBase, n)
+ 2)
+ Pre: numberBase is the number system to use, n is the number of digits
+ 3)
+ 4)
+ Post: the maximum value for numberBase consisting of n digits is computed
+ return Power(numberBasen) 1
+ 5) end MaxValue
+ 9.5 Factorial of a number
+ Attaining the factorial of a number is a primitive mathematical operation. Many
+ implementations of the factorial algorithm are recursive as the problem is re
+cursive in nature, however here we present an iterative solution. The iterative
+ solution is presented because it too is trivial to implement and doesnt su er
+ from the use of recursion (for more on recursion see C).
+ The factorial of 0 and 1 is 0. The aforementioned acts as a base case that we
+ will build upon. The factorial of 2 is 2 the factorial of 1, similarly the factorial
+ of 3 is 3 the factorial of 2 and so on. We can indicate that we are after the
+ factorial of a number using the form N! where N is the number we wish to
+ attain the factorial of. Our algorithm doesnt use such notation but it is handy
+ to know.
+CHAPTER 9. NUMERIC
+ 1) algorithm Factorial(n)
+ 2)
+ Pre: n 0, n is the number to compute the factorial of
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: the factorial of n is computed
+ if n < 2
+ return 1
+ end if
+ factorial 
+1
+ for i 2 to n
+ factorial 
+10) end for
+ factorial i
+ 11) return factorial
+ 12) end Factorial
+ 9.6 Summary
+ 75
+ In this chapter we have presented several numeric algorithms, most of which
+ are simply here because they were fun to design. Perhaps the message that
+ the reader should gain from this chapter is that algorithms can be applied to
+ several domains to make work in that respective domain attainable. Numeric
+ algorithms in particular drive some of the most advanced systems on the planet
+ computing such data as weather forecasts.
+ www.dbooks.org
+Chapter 10
+ Searching
+ 10.1 Sequential Search
+ A simple algorithm that search for a speci c item inside a list. It operates
+ looping on each element O(n) until a match occurs or the end is reached.
+ 1) algorithm SequentialSearch(list, item)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: return index of item if found, otherwise 1
+ index 
+0
+ while index < list.Count and list[index]= item
+ index 
+end while
+ index +1
+ if index < list.Count and list[index] = item
+ return index
+ 10) end if
+ 11) return 1
+ 12) end SequentialSearch
+ 10.2 Probability Search
+ Probability search is a statistical sequential searching algorithm. In addition to
+ searching for an item, it takes into account its frequency by swapping it with
+ its predecessor in the list. The algorithm complexity still remains at O(n) but
+ in a non-uniform items search the more frequent items are in the rst positions,
+ reducing list scanning time.
+ Figure 10.1 shows the resulting state of a list after searching for two items,
+ notice how the searched items have had their search probability increased after
+ each search operation respectively.
+ 76
+CHAPTER 10. SEARCHING
+ Figure 10.1: a) Search(12), b) Search(101)
+ 1) algorithm ProbabilitySearch(list, item)
+ 2)
+ Pre: list = 
+3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: a boolean indicating where the item is found or not;
+ in the former case swap founded item with its predecessor
+ index 
+0
+ while index < list.Count and list[index]= item
+ index 
+end while
+ index +1
+ if index list.Count or list[index] = item
+ return false
+ 10) end if
+ 11) if index > 0
+ 12)
+ Swap(list[index] list[index 1])
+ 13) end if
+ 14) return true
+ 15) end ProbabilitySearch
+ 10.3 Summary
+ 77
+ In this chapter we have presented a few novel searching algorithms. We have
+ presented more e cient searching algorithms earlier on, like for instance the
+ logarithmic searching algorithm that AVL and BST trees use (de ned in 3.2).
+ We decided not to cover a searching algorithm known as binary chop (another
+ name for binary search, binary chop usually refers to its array counterpart) as
+ www.dbooks.org
+CHAPTER 10. SEARCHING
+ the reader has already seen such an algorithm in 3.
+ 78
+ Searching algorithms and their e ciency largely depends on the underlying
+ data structure being used to store the data. For instance it is quicker to deter
+mine whether an item is in a hash table than it is an array, similarly it is quicker
+ to search a BST than it is a linked list. If you are going to search for data fairly
+ often then we strongly advise that you sit down and research the data structures
+ available to you. In most cases using a list or any other primarily linear data
+ structure is down to lack of knowledge. Model your data and then research the
+ data structures that best t your scenario.
+Chapter 11
+ Strings
+ Strings have their own chapter in this text purely because string operations
+ and transformations are incredibly frequent within programs. The algorithms
+ presented are based on problems the authors have come across previously, or
+ were formulated to satisfy curiosity.
+ 11.1 Reversing the order of words in a sentence
+ De ning algorithms for primitive string operations is simple, e.g. extracting a
+ sub-string of a string, however some algorithms that require more inventiveness
+ can be a little more tricky.
+ The algorithm presented here does not simply reverse the characters in a
+ string, rather it reverses the order of words within a string. This algorithm
+ works on the principal that words are all delimited by white space, and using a
+ few markers to de ne where words start and end we can easily reverse them.
+ 79
+ www.dbooks.org
+CHAPTER11. STRINGS 80
+ 1)algorithmReverseWords(value)
+ 2) Pre: value= ,sbisastringbu er
+ 3) Post: thewordsinvaluehavebeenreversed
+ 4) last value.Length 1
+ 5) start last
+ 6) whilelast 0
+ 7) //skipwhitespace
+ 8) whilestart 0andvalue[start]=whitespace
+ 9) start start 1
+ 10) endwhile
+ 11) last start
+ 12) //marchdowntotheindexbeforethebeginningoftheword
+ 13) whilestart 0andstart =whitespace
+ 14) start start 1
+ 15) endwhile
+ 16) //appendcharsfromstart+1tolength+1tostringbu ersb
+ 17) fori start+1tolast
+ 18) sb.Append(value[i])
+ 19) endfor
+ 20) //ifthisisntthelastwordinthestringaddsomewhitespaceafterthewordinthebu er
+ 21) if start>0
+ 22) sb.Append( )
+ 23) endif
+ 24) last start 1
+ 25) start last
+ 26) endwhile
+ 27) //checkifwehaveaddedonetoomanywhitespacetosb
+ 28) if sb[sb.Length 1]=whitespace
+ 29) //cutthewhitespace
+ 30) sb.Length sb.Length 1
+ 31) endif
+ 32) returnsb
+ 33)endReverseWords
+ 11.2 Detectingapalindrome
+ Althoughnot a frequent algorithmthatwill beapplied inreal-life scenarios
+ detectingapalindromeisafun,andas itturnsoutprettytrivialalgorithmto
+ design.
+ ThealgorithmthatwepresenthasaO(n)runtimecomplexity. Ouralgo
+rithmusestwopointersatoppositeendsofstringwearecheckingisapalindrome
+ ornot. Thesepointersmarchintowardseachotheralwayscheckingthateach
+ charactertheypointtoisthesamewithrespecttovalue.Figure11.1showsthe
+ IsPalindromealgorithminoperationonthestring WasitEliotstoiletIsaw?
+ Ifyouremoveallpunctuation,andwhitespacefromtheaforementionedstring
+ youwill ndthat it isavalidpalindrome.
+CHAPTER 11. STRINGS
+ 81
+ Figure 11.1: left and right pointers marching in towards one another
+ 1) algorithm IsPalindrome(value)
+ 2)
+ Pre: value=
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: value is determined to be a palindrome or not
+ word value.Strip().ToUpperCase()
+ left 
+right 
+0
+ word.Length 1
+ while word[left] = word[right] and left < right
+ left 
+right 
+10) end while
+ left + 1
+ right 1
+ 11) return word[left] = word[right]
+ 12) end IsPalindrome
+ In the IsPalindrome algorithm we call a method by the name of Strip. This
+ algorithm discards punctuation in the string, including white space. As a result
+ word contains a heavily compacted representation of the original string, each
+ character of which is in its uppercase representation.
+ Palindromes discard white space, punctuation, and case making these changes
+ allows us to design a simple algorithm while making our algorithm fairly robust
+ with respect to the palindromes it will detect.
+ 11.3 Counting the number of words in a string
+ Counting the number of words in a string can seem pretty trivial at rst, however
+ there are a few cases that we need to be aware of:
+ 1. tracking when we are in a string
+ 2. updating the word count at the correct place
+ 3. skipping white space that delimits the words
+ As an example consider the string Ben ate hay Clearly this string contains
+ three words, each of which distinguished via white space. All of the previously
+ listed points can be managed by using three variables:
+ 1. index
+ 2. wordCount
+ 3. inWord
+ www.dbooks.org
+CHAPTER 11. STRINGS
+ Figure 11.2: String with three words
+ 82
+ Figure 11.3: String with varying number of white space delimiting the words
+ Of the previously listed index keeps track of the current index we are at in
+ the string, wordCount is an integer that keeps track of the number of words we
+ have encountered, and nally inWord is a Boolean ag that denotes whether
+ or not at the present time we are within a word. If we are not currently hitting
+ white space we are in a word, the opposite is true if at the present index we are
+ hitting white space.
+ What denotes a word? In our algorithm each word is separated by one or
+ more occurrences of white space. We dont take into account any particular
+ splitting symbols you may use, e.g. in .NET String.Split1 can take a char (or
+ array of characters) that determines a delimiter to use to split the characters
+ within the string into chunks of strings, resulting in an array of sub-strings.
+ In Figure 11.2 we present a string indexed as an array. Typically the pattern
+ is the same for most words, delimited by a single occurrence of white space.
+ Figure 11.3 shows the same string, with the same number of words but with
+ varying white space splitting them.
+ 1http://msdn.microsoft.com/en-us/library/system.string.split.aspx
+CHAPTER 11. STRINGS
+ 1) algorithm WordCount(value)
+ 2)
+ Pre: value=
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: the number of words contained within value is determined
+ inWord true
+ wordCount 0
+ index 
+0
+ // skip initial white space
+ while value[index] = whitespace and index < value.Length 1
+ index 
+10) end while
+ index +1
+ 11) // was the string just whitespace?
+ return 0
+ 12) if index = value.Length and value[index] = whitespace
+ 13)
+ 14) end if
+ 15) while index < value.Length
+ 16)
+ if value[index] = whitespace
+ 17)
+ 18)
+ // skip all whitespace
+ 83
+ while value[index] = whitespace and index < value.Length 1
+ 19)
+ 20)
+ 21)
+ 22)
+ 23)
+ 24)
+ 25)
+ 26)
+ index 
+end while
+ index +1
+ inWord false
+ wordCount wordCount+1
+ else
+ inWord true
+ end if
+ index 
+27) end while
+ index +1
+ 28) // last word may have not been followed by whitespace
+ 29) if inWord
+ 30)
+ wordCount wordCount+1
+ 31) end if
+ 32) return wordCount
+ 33) end WordCount
+ 11.4 Determining the number of repeated words
+ within a string
+ With the help of an unordered set, and an algorithm that can split the words
+ within a string using a speci ed delimiter this algorithm is straightforward to
+ implement. If we split all the words using a single occurrence of white space
+ as our delimiter we get all the words within the string back as elements of
+ an array. Then if we iterate through these words adding them to a set which
+ contains only unique strings we can attain the number of unique words from the
+ string. All that is left to do is subtract the unique word count from the total
+ number of stings contained in the array returned from the split operation. The
+ split operation that we refer to is the same as that mentioned in 11.3.
+ www.dbooks.org
+CHAPTER 11. STRINGS
+ 84
+ Figure 11.4: a) Undesired uniques set; b) desired uniques set
+ 1) algorithm RepeatedWordCount(value)
+ 2)
+ Pre: value=
+ 3)
+ 4)
+ 5)
+ 6)
+ 7)
+ 8)
+ 9)
+ Post: the number of repeated words in value is returned
+ words value.Split( )
+ uniques 
+Set
+ foreach word in words
+ uniques.Add(word.Strip())
+ end foreach
+ return words.Length uniques.Count
+ 10) end RepeatedWordCount
+ You will notice in the RepeatedWordCount algorithm that we use the Strip
+ method we referred to earlier in 11.1. This simply removes any punctuation
+ from a word. The reason we perform this operation on each word is so that
+ we can build a more accurate unique string collection, e.g. test , and test!
+ are the same word minus the punctuation. Figure 11.4 shows the undesired and
+ desired sets for the unique set respectively.
+ 11.5 Determining the rst matching character
+ between two strings
+ The algorithm to determine whether any character of a string matches any of the
+ characters in another string is pretty trivial. Put simply, we can parse the strings
+ considered using a double loop and check, discarding punctuation, the equality
+ between any characters thus returning a non-negative index that represents the
+ location of the rst character in the match (Figure 11.5); otherwise we return-1 if no match occurs. This approach exhibit a run time complexity of O(n2).
+CHAPTER11. STRINGS 85
+ t s e t
+ 0 1 2 3 4
+ s r e t p
+ 0 1 2 3 4 5 6
+ Word
+ Match
+ i
+ t s e t
+ 0 1 2 3 4
+ s r e t p
+ 0 1 2 3 4 5 6
+ i
+ index
+ t s e t
+ 0 1 2 3 4
+ s r e t p
+ 0 1 2 3 4 5 6
+ i
+ index index
+ a) b) c)
+ Figure11.5: a)FirstStep;b)SecondStepc)MatchOccurred
+ 1)algorithmAny(word,match)
+ 2) Pre: wordmatch=
+ 3) Post: indexrepresentingmatchlocationifoccured, 1otherwise
+ 4) fori 0towordLength 1
+ 5) whileword[i]=whitespace
+ 6) i i+1
+ 7) endwhile
+ 8) forindex 0tomatchLength 1
+ 9) whilematch[index]=whitespace
+ 10) index index+1
+ 11) endwhile
+ 12) ifmatch[index]=word[i]
+ 13) returnindex
+ 14) endif
+ 15) endfor
+ 16) endfor
+ 17) return 1
+ 18)endAny
+ 11.6 Summary
+ Wehope that the reader has seenhowfunalgorithms on stringdata types
+ are. Stringsareprobablythemost commondatatype (anddatastructure
+rememberwearedealingwithanarray)thatyouwillworkwithsoitsimportant
+ thatyoulearntobecreativewiththem.Weforone ndstringsfascinating.A
+ simpleGooglesearchonstringnuancesbetweenlanguagesandencodingswill
+ provideyouwithagreatnumberofproblems. Nowthatwehavespurredyou
+ alongalittlewithourintroductoryalgorithmsyoucandevisesomeofyourown.
